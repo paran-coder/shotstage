@@ -74,8 +74,11 @@ export function CameraPanel() {
       </div>
 
       <p className="mb-3 text-xs leading-relaxed text-neutral-500">
-        <span className="font-medium text-neutral-300">WASD</span>로 이동하고, 드래그로 시점을
-        회전하고(제자리 pan/tilt), 스크롤로 돌리하세요.
+        <span className="font-medium text-neutral-300">드래그</span>로 인물을 중심에 두고 회전하고,{" "}
+        <span className="font-medium text-neutral-300">스페이스+드래그</span>로 화면을 이동하고
+        (핸드 툴), <span className="font-medium text-neutral-300">스크롤</span>로 줌인/아웃하세요.
+        <span className="font-medium text-neutral-300"> WASD</span>/
+        <span className="font-medium text-neutral-300">Q,E</span>로 중심점을 미세 조정할 수 있어요.
       </p>
 
       <button

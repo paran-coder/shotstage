@@ -18,19 +18,21 @@ export function Header() {
       </div>
       <div className="hidden items-center gap-3 text-[11px] text-neutral-500 md:flex">
         <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">WASD</kbd> 이동
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">drag</kbd> 궤도 회전
         </span>
         <span>·</span>
         <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">drag</kbd> 시점
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">space</kbd>+
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">drag</kbd> 화면 이동
         </span>
         <span>·</span>
         <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">scroll</kbd> 돌리
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">scroll</kbd> 줌
         </span>
         <span>·</span>
         <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">Q/E</kbd> 상하
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">WASD</kbd>/
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">Q/E</kbd> 중심점 이동
         </span>
       </div>
     </header>

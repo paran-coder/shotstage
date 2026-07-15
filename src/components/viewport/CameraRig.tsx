@@ -1,4 +1,9 @@
-// WASD 이동, 드래그 시점 회전, 스크롤 돌리, Q/E 상하 이동을 처리하는 자유 비행 카메라 컨트롤러
+// 카메라 컨트롤러: 인물(피사체)을 중심으로 궤도 회전하는 방식.
+// - 드래그: 피사체를 중심에 고정한 채 카메라가 주위를 도는 궤도 회전(orbit)
+// - 스페이스바 + 드래그: 핸드 툴(화면 이동/팬)
+// - 스크롤: 궤도 반지름 조절(줌/돌리)
+// - WASD: 궤도 중심(피벗)을 수평으로 이동, Q/E: 피벗 높이 조절
+// - Bird's-eye 뷰에서는 궤도 개념이 없으므로 드래그=평면 이동, 스크롤=고도 조절로 별도 동작
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -7,11 +12,13 @@ import * as THREE from "three";
 import { useShotStore } from "@/store/useShotStore";
 import { SUBJECT_EYE_HEIGHT, SHOT_PRESETS } from "@/lib/shotPresets";
 
-const MOVE_SPEED = 2.4; // m/s
-const VERTICAL_SPEED = 1.6; // m/s
-const DOLLY_SPEED = 0.0016; // per wheel delta unit
-const LOOK_SENSITIVITY = 0.0025;
+const PIVOT_PAN_SPEED = 2.4; // m/s (WASD로 피벗 이동)
+const VERTICAL_SPEED = 1.6; // m/s (Q/E로 피벗 높이 조절)
+const ORBIT_RADIUS_SPEED = 0.0016; // per wheel delta unit
+const ORBIT_LOOK_SENSITIVITY = 0.0018; // 드래그 시 궤도 각도 변화 민감도 (기존보다 낮춤)
+const HAND_PAN_SPEED = 0.003; // 스페이스+드래그 시 피벗 이동 민감도
 const PITCH_LIMIT = Math.PI * 0.48;
+const MIN_ORBIT_RADIUS = 0.3;
 const BIRD_PAN_SPEED = 0.006; // per drag pixel
 const BIRD_ZOOM_SPEED = 0.02; // per wheel delta unit
 // 오버숄더 카메라가 두 번째 피사체를 지나 더 물러날 때, 완전히 일직선이 아니라
@@ -27,11 +34,20 @@ function computeSubjectWorldPosition(leftRight: number, depth: number) {
 
 export function CameraRig() {
   const { camera, gl } = useThree();
-  const posRef = useRef(new THREE.Vector3(0, SUBJECT_EYE_HEIGHT, 2.8));
-  const yawRef = useRef(0); // 초기: 카메라가 -Z(피사체 쪽)를 바라보도록 시작
-  const pitchRef = useRef(0);
+
+  // 궤도 회전 상태: 피벗(중심점) 오프셋 + 각도(yaw/pitch) + 반지름
+  const pivotOffsetRef = useRef(new THREE.Vector3(0, 0, 0));
+  const orbitYawRef = useRef(0); // 초기: 카메라가 -Z(피사체 쪽)를 바라보도록 시작
+  const orbitPitchRef = useRef(0);
+  const orbitRadiusRef = useRef(2.8);
+
+  // Bird's-eye 전용 상태 (궤도 회전과 완전히 분리)
+  const birdPanRef = useRef(new THREE.Vector2(0, 0));
+  const birdHeightRef = useRef(6);
+
   const keysRef = useRef<Set<string>>(new Set());
   const isDraggingRef = useRef(false);
+  const isSpacePanningRef = useRef(false);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
   const frameCounterRef = useRef(0);
   const viewModeRef = useRef<"shot" | "bird">("shot");
@@ -52,10 +68,42 @@ export function CameraRig() {
     viewModeRef.current = viewMode;
   }, [viewMode]);
 
-  // 키보드 입력
+  function currentPivot(): THREE.Vector3 {
+    const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
+    const focalHeight = SHOT_PRESETS[shotType].focalHeight;
+    return new THREE.Vector3(
+      subjectPos.x + pivotOffsetRef.current.x,
+      focalHeight + pivotOffsetRef.current.y,
+      subjectPos.z + pivotOffsetRef.current.z,
+    );
+  }
+
+  // 키보드 입력 (스페이스바 = 핸드 툴 활성화)
   useEffect(() => {
-    const down = (e: KeyboardEvent) => keysRef.current.add(e.key.toLowerCase());
-    const up = (e: KeyboardEvent) => keysRef.current.delete(e.key.toLowerCase());
+    function isTypingTarget(target: EventTarget | null) {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    }
+
+    const down = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return; // 입력창에 타이핑 중이면 단축키로 가로채지 않는다
+      if (e.code === "Space") {
+        e.preventDefault();
+        isSpacePanningRef.current = true;
+        return;
+      }
+      keysRef.current.add(e.key.toLowerCase());
+    };
+    const up = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
+      if (e.code === "Space") {
+        isSpacePanningRef.current = false;
+        return;
+      }
+      keysRef.current.delete(e.key.toLowerCase());
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
@@ -64,7 +112,7 @@ export function CameraRig() {
     };
   }, []);
 
-  // 드래그로 시점 회전(Shot view) 또는 화면 이동(Bird's-eye), 스크롤로 돌리 또는 고도 조절
+  // 드래그로 궤도 회전(Shot view) 또는 화면 이동(Bird's-eye), 스크롤로 반지름/고도 조절
   useEffect(() => {
     const el = gl.domElement;
 
@@ -79,13 +127,24 @@ export function CameraRig() {
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
 
       if (viewModeRef.current === "bird") {
-        // Bird's-eye: 드래그는 시점 회전이 아니라 평면 이동(패닝)으로 동작해야 한다.
-        posRef.current.x -= dx * BIRD_PAN_SPEED;
-        posRef.current.z -= dy * BIRD_PAN_SPEED;
+        // Bird's-eye: 드래그는 항상 평면 이동(패닝)
+        birdPanRef.current.x -= dx * BIRD_PAN_SPEED;
+        birdPanRef.current.y -= dy * BIRD_PAN_SPEED;
+        return;
+      }
+
+      if (isSpacePanningRef.current) {
+        // 스페이스바 + 드래그 = 핸드 툴(팬): 피벗을 화면 기준 좌우/상하로 이동
+        const right = new THREE.Vector3(1, 0, 0).applyEuler(
+          new THREE.Euler(0, orbitYawRef.current, 0, "YXZ"),
+        );
+        pivotOffsetRef.current.addScaledVector(right, -dx * HAND_PAN_SPEED);
+        pivotOffsetRef.current.y += dy * HAND_PAN_SPEED;
       } else {
-        yawRef.current -= dx * LOOK_SENSITIVITY;
-        pitchRef.current = THREE.MathUtils.clamp(
-          pitchRef.current - dy * LOOK_SENSITIVITY,
+        // 일반 드래그 = 피사체를 중심에 둔 궤도 회전
+        orbitYawRef.current -= dx * ORBIT_LOOK_SENSITIVITY;
+        orbitPitchRef.current = THREE.MathUtils.clamp(
+          orbitPitchRef.current - dy * ORBIT_LOOK_SENSITIVITY,
           -PITCH_LIMIT,
           PITCH_LIMIT,
         );
@@ -98,13 +157,12 @@ export function CameraRig() {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       if (viewModeRef.current === "bird") {
-        // Bird's-eye: 스크롤은 고도(줌)를 조절한다.
-        posRef.current.y = Math.max(0.5, posRef.current.y + e.deltaY * BIRD_ZOOM_SPEED);
+        birdHeightRef.current = Math.max(0.5, birdHeightRef.current + e.deltaY * BIRD_ZOOM_SPEED);
       } else {
-        const forward = new THREE.Vector3(0, 0, -1).applyEuler(
-          new THREE.Euler(pitchRef.current, yawRef.current, 0, "YXZ"),
+        orbitRadiusRef.current = Math.max(
+          MIN_ORBIT_RADIUS,
+          orbitRadiusRef.current + e.deltaY * ORBIT_RADIUS_SPEED,
         );
-        posRef.current.addScaledVector(forward, -e.deltaY * DOLLY_SPEED);
       }
     };
 
@@ -130,8 +188,6 @@ export function CameraRig() {
 
     if (pendingSnap.shotType === "overShoulder") {
       // 오버숄더: 두 번째 피사체(대화 상대) 어깨 너머에서, 첫 번째 피사체의 얼굴을 바라본다.
-      // 카메라를 두 번째 피사체 위치에서 "더 뒤로" 밀어내고(두 번째 피사체가 인물 몸속에
-      // 파묻히지 않을 만큼 충분히), 완전히 일직선이 아니라 살짝 옆으로 비켜서게 한다.
       const secondPos = computeSubjectWorldPosition(secondSubject.leftRight, secondSubject.depth);
       const dirAB = new THREE.Vector3().subVectors(secondPos, subjectPos).setY(0).normalize();
       const perp = new THREE.Vector3(dirAB.z, 0, -dirAB.x);
@@ -150,64 +206,76 @@ export function CameraRig() {
       focal = new THREE.Vector3(subjectPos.x, pendingSnap.focalHeight, subjectPos.z);
     }
 
-    posRef.current.copy(newPos);
+    // 새 샷을 고를 때마다 피벗 오프셋은 원점(피사체 정중앙)으로 리셋한다.
+    pivotOffsetRef.current.set(0, 0, 0);
+    // Bird's-eye 중심도 같이 리셋해서, 버드아이 뷰 상태에서 샷을 바꿔도 인물이 바로 중심에 오게 한다.
+    birdPanRef.current.set(0, 0);
+
     // 일반 Object3D.lookAt()은 Camera.lookAt()과 방향 계산이 반대라, 카메라 계열
     // 더미 오브젝트를 써야 실제 카메라와 동일한 방향으로 바라보게 된다.
     const dummy = new THREE.PerspectiveCamera();
     dummy.position.copy(newPos);
     dummy.lookAt(focal);
     const euler = new THREE.Euler().setFromQuaternion(dummy.quaternion, "YXZ");
-    yawRef.current = euler.y;
-    pitchRef.current = euler.x;
+    orbitYawRef.current = euler.y;
+    orbitPitchRef.current = euler.x;
+    orbitRadiusRef.current = Math.max(MIN_ORBIT_RADIUS, newPos.distanceTo(focal));
     clearPendingSnap();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingSnap]);
 
-  // "Recenter on subject" 요청 처리 (위치는 그대로, 시선만 피사체로)
+  // "Recenter on subject" 요청 처리: 각도/거리는 유지하고, 피벗만 피사체 정중앙으로 되돌린다.
   useEffect(() => {
     if (recenterRequestId === 0) return;
-    const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
-    const focalHeight = SHOT_PRESETS[shotType].focalHeight;
-    const focal = new THREE.Vector3(subjectPos.x, focalHeight, subjectPos.z);
-    const dummy = new THREE.PerspectiveCamera();
-    dummy.position.copy(posRef.current);
-    dummy.lookAt(focal);
-    const euler = new THREE.Euler().setFromQuaternion(dummy.quaternion, "YXZ");
-    yawRef.current = euler.y;
-    pitchRef.current = euler.x;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    pivotOffsetRef.current.set(0, 0, 0);
   }, [recenterRequestId]);
 
   useFrame((_, delta) => {
     const keys = keysRef.current;
-    const forward = new THREE.Vector3(0, 0, -1).applyEuler(
-      new THREE.Euler(0, yawRef.current, 0, "YXZ"),
-    );
-    const right = new THREE.Vector3(1, 0, 0).applyEuler(
-      new THREE.Euler(0, yawRef.current, 0, "YXZ"),
-    );
-    const step = MOVE_SPEED * delta;
-
-    if (keys.has("w")) posRef.current.addScaledVector(forward, step);
-    if (keys.has("s")) posRef.current.addScaledVector(forward, -step);
-    if (keys.has("a")) posRef.current.addScaledVector(right, -step);
-    if (keys.has("d")) posRef.current.addScaledVector(right, step);
-    if (keys.has("q")) posRef.current.y -= VERTICAL_SPEED * delta;
-    if (keys.has("e")) posRef.current.y += VERTICAL_SPEED * delta;
 
     if (viewMode === "bird") {
-      // Bird's-eye 뷰: WASD/드래그/스크롤로 움직인 posRef.x/z를 평면 이동으로,
-      // posRef.y를 고도(줌)로 그대로 활용한다.
-      // (Shot view로 돌아가면 posRef/yaw/pitch가 그대로 남아있어 원래 시점이 복원된다)
-      const birdHeight = Math.max(3, posRef.current.y + 6);
-      camera.position.set(posRef.current.x, birdHeight, posRef.current.z);
-      camera.lookAt(posRef.current.x, 0, posRef.current.z);
+      // Bird's-eye 뷰: WASD/드래그/스크롤로 조절한 birdPan/birdHeight를 그대로 사용.
+      // (Shot view로 돌아가면 궤도 상태가 그대로 남아있어 원래 시점이 복원된다)
+      const step = PIVOT_PAN_SPEED * delta;
+      if (keys.has("w")) birdPanRef.current.y -= step;
+      if (keys.has("s")) birdPanRef.current.y += step;
+      if (keys.has("a")) birdPanRef.current.x -= step;
+      if (keys.has("d")) birdPanRef.current.x += step;
+      if (keys.has("q")) birdHeightRef.current = Math.max(0.5, birdHeightRef.current - VERTICAL_SPEED * delta);
+      if (keys.has("e")) birdHeightRef.current += VERTICAL_SPEED * delta;
+
+      const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
+      const centerX = subjectPos.x + birdPanRef.current.x;
+      const centerZ = subjectPos.z + birdPanRef.current.y;
+      camera.position.set(centerX, birdHeightRef.current, centerZ);
+      camera.lookAt(centerX, 0, centerZ);
     } else {
-      camera.position.copy(posRef.current);
+      // Shot view: WASD로 피벗을 수평 이동, Q/E로 피벗 높이 조절
+      const forward = new THREE.Vector3(0, 0, -1).applyEuler(
+        new THREE.Euler(0, orbitYawRef.current, 0, "YXZ"),
+      );
+      const right = new THREE.Vector3(1, 0, 0).applyEuler(
+        new THREE.Euler(0, orbitYawRef.current, 0, "YXZ"),
+      );
+      const step = PIVOT_PAN_SPEED * delta;
+      if (keys.has("w")) pivotOffsetRef.current.addScaledVector(forward, step);
+      if (keys.has("s")) pivotOffsetRef.current.addScaledVector(forward, -step);
+      if (keys.has("a")) pivotOffsetRef.current.addScaledVector(right, -step);
+      if (keys.has("d")) pivotOffsetRef.current.addScaledVector(right, step);
+      if (keys.has("q")) pivotOffsetRef.current.y -= VERTICAL_SPEED * delta;
+      if (keys.has("e")) pivotOffsetRef.current.y += VERTICAL_SPEED * delta;
+
+      const updatedPivot = currentPivot();
+      const orbitForward = new THREE.Vector3(0, 0, -1).applyEuler(
+        new THREE.Euler(orbitPitchRef.current, orbitYawRef.current, 0, "YXZ"),
+      );
+      const camPos = updatedPivot.clone().addScaledVector(orbitForward, -orbitRadiusRef.current);
+      camera.position.copy(camPos);
       camera.quaternion.setFromEuler(
-        new THREE.Euler(pitchRef.current, yawRef.current, 0, "YXZ"),
+        new THREE.Euler(orbitPitchRef.current, orbitYawRef.current, 0, "YXZ"),
       );
     }
+
     if (camera instanceof THREE.PerspectiveCamera && camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
@@ -217,13 +285,13 @@ export function CameraRig() {
     frameCounterRef.current += 1;
     if (frameCounterRef.current % 10 === 0) {
       const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
-      const distance = posRef.current.distanceTo(subjectPos);
+      const distance = camera.position.distanceTo(subjectPos);
 
       const faceDir = new THREE.Vector3(0, 0, 1).applyEuler(
         new THREE.Euler(0, THREE.MathUtils.degToRad(subject.rotate), 0),
       );
       const toCamera = new THREE.Vector3()
-        .subVectors(posRef.current, subjectPos)
+        .subVectors(camera.position, subjectPos)
         .setY(0)
         .normalize();
       const dot = faceDir.dot(toCamera);
