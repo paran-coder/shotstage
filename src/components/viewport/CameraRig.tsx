@@ -178,35 +178,34 @@ export function CameraRig() {
     };
   }, [gl]);
 
-  // 샷 타입 프리셋 스냅 요청 처리
-  useEffect(() => {
-    if (!pendingSnap) return;
+  function applySnap(id: keyof typeof SHOT_PRESETS) {
+    const preset = SHOT_PRESETS[id];
     const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
 
     let newPos: THREE.Vector3;
     let focal: THREE.Vector3;
 
-    if (pendingSnap.shotType === "overShoulder") {
+    if (id === "overShoulder") {
       // 오버숄더: 두 번째 피사체(대화 상대) 어깨 너머에서, 첫 번째 피사체의 얼굴을 바라본다.
       const secondPos = computeSubjectWorldPosition(secondSubject.leftRight, secondSubject.depth);
       const dirAB = new THREE.Vector3().subVectors(secondPos, subjectPos).setY(0).normalize();
       const perp = new THREE.Vector3(dirAB.z, 0, -dirAB.x);
       newPos = new THREE.Vector3()
         .copy(secondPos)
-        .addScaledVector(dirAB, pendingSnap.distance)
+        .addScaledVector(dirAB, preset.distance)
         .addScaledVector(perp, OTS_LATERAL_NUDGE);
-      newPos.y = SUBJECT_EYE_HEIGHT + pendingSnap.heightOffset;
-      focal = new THREE.Vector3(subjectPos.x, pendingSnap.focalHeight, subjectPos.z);
+      newPos.y = SUBJECT_EYE_HEIGHT + preset.heightOffset;
+      focal = new THREE.Vector3(subjectPos.x, preset.focalHeight, subjectPos.z);
     } else {
       newPos = new THREE.Vector3(
         subjectPos.x,
-        SUBJECT_EYE_HEIGHT + pendingSnap.heightOffset,
-        subjectPos.z + pendingSnap.distance,
+        SUBJECT_EYE_HEIGHT + preset.heightOffset,
+        subjectPos.z + preset.distance,
       );
-      focal = new THREE.Vector3(subjectPos.x, pendingSnap.focalHeight, subjectPos.z);
+      focal = new THREE.Vector3(subjectPos.x, preset.focalHeight, subjectPos.z);
     }
 
-    // 새 샷을 고를 때마다 피벗 오프셋은 원점(피사체 정중앙)으로 리셋한다.
+    // 새 샷을 고를 때마다(또는 재정렬 시) 피벗 오프셋은 원점(피사체 정중앙)으로 리셋한다.
     pivotOffsetRef.current.set(0, 0, 0);
     // Bird's-eye 중심도 같이 리셋해서, 버드아이 뷰 상태에서 샷을 바꿔도 인물이 바로 중심에 오게 한다.
     birdPanRef.current.set(0, 0);
@@ -220,14 +219,22 @@ export function CameraRig() {
     orbitYawRef.current = euler.y;
     orbitPitchRef.current = euler.x;
     orbitRadiusRef.current = Math.max(MIN_ORBIT_RADIUS, newPos.distanceTo(focal));
+  }
+
+  // 샷 타입 프리셋 스냅 요청 처리
+  useEffect(() => {
+    if (!pendingSnap) return;
+    applySnap(pendingSnap.shotType);
     clearPendingSnap();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingSnap]);
 
-  // "Recenter on subject" 요청 처리: 각도/거리는 유지하고, 피벗만 피사체 정중앙으로 되돌린다.
+  // "Recenter on subject" 요청 처리: 현재 샷 타입 기준으로 다시 스냅한다.
+  // (드래그로 회전했거나 WASD/스페이스+드래그로 피벗이 옮겨간 것을 모두 원래 프레이밍으로 되돌림)
   useEffect(() => {
     if (recenterRequestId === 0) return;
-    pivotOffsetRef.current.set(0, 0, 0);
+    applySnap(shotType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recenterRequestId]);
 
   useFrame((_, delta) => {
