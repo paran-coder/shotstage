@@ -36,6 +36,12 @@ export function CameraRig() {
   const { camera, gl } = useThree();
 
   // 궤도 회전 상태: 피벗(중심점) 오프셋 + 각도(yaw/pitch) + 반지름
+  // pivotBaseRef: 마지막 스냅/재정렬 시점의 "피사체 기준 피벗 위치"를 고정해서 저장한다.
+  // (SUBJECT 패널의 좌우/깊이 슬라이더를 계속 라이브로 추적하면, 슬라이더를 움직일 때마다
+  //  카메라가 피사체를 쫓아가며 항상 중앙에 고정시켜버려서, 정작 화면 안에서는 피사체가
+  //  안 움직이고 배경만 움직이는 것처럼 보이는 문제가 생긴다. 스냅 시점에만 갱신해서
+  //  이후 슬라이더 조작은 프레임 안에서 피사체가 실제로 움직이는 걸로 보이게 한다.)
+  const pivotBaseRef = useRef(new THREE.Vector3(0, SHOT_PRESETS.medium.focalHeight, 0));
   const pivotOffsetRef = useRef(new THREE.Vector3(0, 0, 0));
   const orbitYawRef = useRef(0); // 초기: 카메라가 -Z(피사체 쪽)를 바라보도록 시작
   const orbitPitchRef = useRef(0);
@@ -69,12 +75,10 @@ export function CameraRig() {
   }, [viewMode]);
 
   function currentPivot(): THREE.Vector3 {
-    const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
-    const focalHeight = SHOT_PRESETS[shotType].focalHeight;
     return new THREE.Vector3(
-      subjectPos.x + pivotOffsetRef.current.x,
-      focalHeight + pivotOffsetRef.current.y,
-      subjectPos.z + pivotOffsetRef.current.z,
+      pivotBaseRef.current.x + pivotOffsetRef.current.x,
+      pivotBaseRef.current.y + pivotOffsetRef.current.y,
+      pivotBaseRef.current.z + pivotOffsetRef.current.z,
     );
   }
 
@@ -213,7 +217,10 @@ export function CameraRig() {
       focal = new THREE.Vector3(subjectPos.x, preset.focalHeight, subjectPos.z);
     }
 
-    // 새 샷을 고를 때마다(또는 재정렬 시) 피벗 오프셋은 원점(피사체 정중앙)으로 리셋한다.
+    // 새 샷을 고를 때마다(또는 재정렬 시) 피벗의 "피사체 기준 위치"를 이 순간의 값으로 고정한다.
+    // 이후 SUBJECT 패널 슬라이더를 움직여도 이 값은 바뀌지 않으므로, 피사체가 실제로
+    // 화면 안에서 움직이는 것으로 보인다 (카메라가 쫓아가며 항상 중앙에 고정하지 않음).
+    pivotBaseRef.current.copy(focal);
     pivotOffsetRef.current.set(0, 0, 0);
     // Bird's-eye 중심도 같이 리셋해서, 버드아이 뷰 상태에서 샷을 바꿔도 인물이 바로 중심에 오게 한다.
     birdPanRef.current.set(0, 0);

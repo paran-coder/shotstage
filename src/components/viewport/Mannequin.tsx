@@ -83,7 +83,7 @@ export function Mannequin({
           {/* 목 관절 */}
           <group position={[0, 0.22, 0]} rotation={pose.neck ?? ZERO}>
             <mesh material={bodyMat}>
-              <cylinderGeometry args={[0.06, 0.065, 0.08, 12]} />
+              <sphereGeometry args={[0.065, 16, 16]} />
             </mesh>
             {/* 머리 */}
             <group position={[0, 0.14, 0]}>
@@ -112,16 +112,16 @@ export function Mannequin({
             </mesh>
 
             <group position={[-0.06, -0.29, 0.02]} rotation={pose.leftElbow ?? ZERO}>
-              {/* 팔꿈치 캡 (살짝 납작하게) */}
-              <mesh material={jointMat} scale={[1, 0.85, 1]}>
-                <sphereGeometry args={[0.058, 14, 14]} />
+              {/* 팔꿈치: 완전한 구체 관절 (구체관절인형처럼 아래팔보다 확실히 굵게) */}
+              <mesh material={jointMat}>
+                <sphereGeometry args={[0.072, 16, 16]} />
               </mesh>
               <mesh position={[0, -0.12, -0.01]} material={bodyMat} castShadow>
                 <capsuleGeometry args={[0.05, 0.2, 4, 10]} />
               </mesh>
-              {/* 손목 밴드 + 주먹 쥔 손 */}
-              <mesh position={[-0.005, -0.22, -0.02]} material={jointMat} scale={[1, 0.5, 1]}>
-                <sphereGeometry args={[0.048, 10, 10]} />
+              {/* 손목: 완전한 구체 관절 */}
+              <mesh position={[-0.005, -0.22, -0.02]} material={jointMat}>
+                <sphereGeometry args={[0.05, 12, 12]} />
               </mesh>
               <mesh position={[-0.01, -0.28, -0.02]} material={bodyMat} castShadow>
                 <sphereGeometry args={[0.065, 12, 12]} />
@@ -139,14 +139,14 @@ export function Mannequin({
             </mesh>
 
             <group position={[0.06, -0.29, 0.02]} rotation={pose.rightElbow ?? ZERO}>
-              <mesh material={jointMat} scale={[1, 0.85, 1]}>
-                <sphereGeometry args={[0.058, 14, 14]} />
+              <mesh material={jointMat}>
+                <sphereGeometry args={[0.072, 16, 16]} />
               </mesh>
               <mesh position={[0, -0.12, -0.01]} material={bodyMat} castShadow>
                 <capsuleGeometry args={[0.05, 0.2, 4, 10]} />
               </mesh>
-              <mesh position={[0.005, -0.22, -0.02]} material={jointMat} scale={[1, 0.5, 1]}>
-                <sphereGeometry args={[0.048, 10, 10]} />
+              <mesh position={[0.005, -0.22, -0.02]} material={jointMat}>
+                <sphereGeometry args={[0.05, 12, 12]} />
               </mesh>
               <mesh position={[0.01, -0.28, -0.02]} material={bodyMat} castShadow>
                 <sphereGeometry args={[0.065, 12, 12]} />
@@ -165,16 +165,16 @@ export function Mannequin({
           </mesh>
 
           <group position={[0, -0.4, 0]} rotation={pose.leftKnee ?? ZERO}>
-            {/* 무릎 캡 (앞으로 살짝 튀어나오게) */}
-            <mesh position={[0, 0, 0.02]} material={jointMat} scale={[1.05, 0.8, 1]}>
-              <sphereGeometry args={[0.085, 16, 16]} />
+            {/* 무릎: 완전한 구체 관절 (구체관절인형처럼 종아리보다 확실히 굵게) */}
+            <mesh material={jointMat}>
+              <sphereGeometry args={[0.098, 18, 18]} />
             </mesh>
             <mesh position={[0, -0.16, 0]} material={bodyMat} castShadow>
               <capsuleGeometry args={[0.078, 0.28, 4, 12]} />
             </mesh>
-            {/* 발목 밴드 */}
-            <mesh position={[0, -0.32, 0]} material={jointMat} scale={[1, 0.55, 1]}>
-              <sphereGeometry args={[0.06, 10, 10]} />
+            {/* 발목: 완전한 구체 관절 */}
+            <mesh position={[0, -0.32, 0]} material={jointMat}>
+              <sphereGeometry args={[0.062, 12, 12]} />
             </mesh>
             {/* 발: 뒤꿈치 + 앞으로 갈수록 좁아지는 발끝 */}
             <group position={[0, -0.37, 0.03]}>
@@ -198,14 +198,14 @@ export function Mannequin({
           </mesh>
 
           <group position={[0, -0.4, 0]} rotation={pose.rightKnee ?? ZERO}>
-            <mesh position={[0, 0, 0.02]} material={jointMat} scale={[1.05, 0.8, 1]}>
-              <sphereGeometry args={[0.085, 16, 16]} />
+            <mesh material={jointMat}>
+              <sphereGeometry args={[0.098, 18, 18]} />
             </mesh>
             <mesh position={[0, -0.16, 0]} material={bodyMat} castShadow>
               <capsuleGeometry args={[0.078, 0.28, 4, 12]} />
             </mesh>
-            <mesh position={[0, -0.32, 0]} material={jointMat} scale={[1, 0.55, 1]}>
-              <sphereGeometry args={[0.06, 10, 10]} />
+            <mesh position={[0, -0.32, 0]} material={jointMat}>
+              <sphereGeometry args={[0.062, 12, 12]} />
             </mesh>
             <group position={[0, -0.37, 0.03]}>
               <mesh position={[0, 0, 0]} material={bodyMat} castShadow>
