@@ -10,7 +10,7 @@ export function ShotTypePanel() {
   const setShotType = useShotStore((s) => s.setShotType);
 
   return (
-    <PanelSection title="SHOT TYPE">
+    <PanelSection title="샷 타입">
       <div className="grid grid-cols-2 gap-2">
         {SHOT_TYPE_ORDER.map((id) => {
           const preset = SHOT_PRESETS[id];

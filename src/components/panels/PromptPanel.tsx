@@ -20,7 +20,7 @@ import {
   saveStylePreset,
 } from "@/lib/db";
 
-const IMAGE_MODELS = ["GPT Image 2", "Nano Banana Pro", "Flux"];
+const IMAGE_MODELS = ["GPT Image 2", "Nano Banana Pro", "Midjourney", "Flux"];
 const VIDEO_MODELS = ["Higgsfield", "Runway", "Kling"];
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -110,7 +110,7 @@ export function PromptPanel() {
   }
 
   return (
-    <PanelSection title="PROMPT">
+    <PanelSection title="프롬프트">
       <div className="mb-3 flex gap-1 rounded-md bg-neutral-900 p-1">
         <button
           onClick={() => setPrompt({ mode: "image" })}
@@ -118,7 +118,7 @@ export function PromptPanel() {
             prompt.mode === "image" ? "bg-accent text-black" : "text-neutral-300"
           }`}
         >
-          Image
+          이미지
         </button>
         <button
           onClick={() => setPrompt({ mode: "video" })}
@@ -126,12 +126,12 @@ export function PromptPanel() {
             prompt.mode === "video" ? "bg-accent text-black" : "text-neutral-300"
           }`}
         >
-          Video
+          비디오
         </button>
       </div>
 
       <div className="mb-3">
-        <label className="mb-1.5 block text-xs text-neutral-400">Model</label>
+        <label className="mb-1.5 block text-xs text-neutral-400">모델</label>
         <select
           value={prompt.model}
           onChange={(e) => setPrompt({ model: e.target.value })}
@@ -153,7 +153,7 @@ export function PromptPanel() {
             onChange={(e) => setPrompt({ hasCharacterSheet: e.target.checked })}
             className="h-3.5 w-3.5 accent-orange-500"
           />
-          I have a character sheet
+          캐릭터시트가 있어요
         </label>
         {prompt.hasCharacterSheet && (
           <div className="ml-5 flex items-center gap-2">
@@ -181,7 +181,7 @@ export function PromptPanel() {
             onChange={(e) => setPrompt({ hasEnvironmentSheet: e.target.checked })}
             className="h-3.5 w-3.5 accent-orange-500"
           />
-          I have an environment sheet
+          환경시트가 있어요
         </label>
         {prompt.hasEnvironmentSheet && (
           <div className="ml-5 flex items-center gap-2">
@@ -204,7 +204,7 @@ export function PromptPanel() {
       </div>
 
       <FieldWithLibrary
-        label="Subject"
+        label="피사체"
         value={prompt.subject}
         placeholder="a young woman in a tan coat"
         onChange={(v) => setPrompt({ subject: v })}
@@ -222,7 +222,7 @@ export function PromptPanel() {
       />
 
       <FieldWithLibrary
-        label="Environment"
+        label="환경"
         value={prompt.environment}
         placeholder="a sunlit modern living room"
         onChange={(v) => setPrompt({ environment: v })}
@@ -240,7 +240,7 @@ export function PromptPanel() {
       />
 
       <FieldWithLibrary
-        label="Look / style"
+        label="스타일"
         value={prompt.lookStyle}
         placeholder="moody cinematic lighting"
         onChange={(v) => setPrompt({ lookStyle: v })}
@@ -253,7 +253,7 @@ export function PromptPanel() {
 
       {prompt.mode === "video" && (
         <div className="mb-3 rounded-md border border-neutral-800 p-3">
-          <div className="mb-2 text-xs text-neutral-400">Camera move</div>
+          <div className="mb-2 text-xs text-neutral-400">카메라 무브</div>
           <div className="mb-3 flex flex-wrap gap-1.5">
             {CAMERA_MOVE_PRESETS.map((m) => (
               <button
@@ -271,7 +271,7 @@ export function PromptPanel() {
           </div>
 
           <div className="mb-3">
-            <div className="mb-1.5 text-xs text-neutral-400">Intensity</div>
+            <div className="mb-1.5 text-xs text-neutral-400">강도</div>
             <div className="flex gap-1.5">
               {MOVE_INTENSITY_OPTIONS.map((opt) => (
                 <button
@@ -291,7 +291,7 @@ export function PromptPanel() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs text-neutral-400">Duration (seconds)</label>
+            <label className="mb-1.5 block text-xs text-neutral-400">지속 시간 (초)</label>
             <input
               type="number"
               min={1}
@@ -310,7 +310,7 @@ export function PromptPanel() {
         onClick={handleGenerate}
         className="w-full rounded-md bg-gradient-to-b from-orange-400 to-accent px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
       >
-        Generate
+        생성하기
       </button>
     </PanelSection>
   );

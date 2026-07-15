@@ -1,5 +1,5 @@
 // 현재 카메라/피사체/프롬프트 설정을 바탕으로 HUD 라벨과 최종 AI 프롬프트 텍스트를 생성
-import { SHOT_PRESETS } from "./shotPresets";
+import { ANGLE_LABEL_KO, SHOT_PRESETS } from "./shotPresets";
 import { fovToMm } from "./lensPresets";
 import { CAMERA_MOVE_PRESETS, MOVE_INTENSITY_OPTIONS } from "./cameraMoves";
 import type {
@@ -16,14 +16,21 @@ interface LabelInput {
   viewDirection: "front" | "back" | "side";
 }
 
-/** 상단 오버레이용 소문자 라벨: 예) "medium shot · 28mm · eye level" */
+const VIEW_DIRECTION_KO: Record<"front" | "back" | "side", string> = {
+  front: "정면",
+  back: "후면",
+  side: "측면",
+};
+
+/** 상단 오버레이용 한국어 라벨: 예) "미디엄 샷 · 28mm · 아이레벨" */
 export function buildTopLabel({ shotType, angleLabel, fov }: LabelInput): string {
   const preset = SHOT_PRESETS[shotType];
   const mm = fovToMm(fov);
-  return `${preset.promptName} · ${mm}mm · ${angleLabel}`;
+  const angleKo = ANGLE_LABEL_KO[angleLabel as keyof typeof ANGLE_LABEL_KO] ?? angleLabel;
+  return `${preset.label} · ${mm}mm · ${angleKo}`;
 }
 
-/** 하단 오버레이용 대문자 라벨: 예) "MEDIUM SHOT · FRONT · EYE LEVEL · 28MM" */
+/** 하단 오버레이용 한국어 라벨: 예) "투 샷 · 정면 · 아이레벨 · 43MM" */
 export function buildBottomLabel({
   shotType,
   angleLabel,
@@ -32,11 +39,12 @@ export function buildBottomLabel({
 }: LabelInput): string {
   const preset = SHOT_PRESETS[shotType];
   const mm = fovToMm(fov);
+  const angleKo = ANGLE_LABEL_KO[angleLabel as keyof typeof ANGLE_LABEL_KO] ?? angleLabel;
   return [
-    preset.promptName.toUpperCase(),
-    viewDirection.toUpperCase(),
-    angleLabel.toUpperCase(),
-    `${mm}MM`,
+    preset.label,
+    VIEW_DIRECTION_KO[viewDirection],
+    angleKo,
+    `${mm}mm`,
   ].join(" · ");
 }
 

@@ -3,22 +3,22 @@ import type { CameraMoveId, MoveIntensity } from "@/types";
 
 export interface CameraMovePreset {
   id: CameraMoveId;
-  label: string; // 버튼에 표시할 이름
-  promptPhrase: string; // 프롬프트 문장에 들어갈 동작 표현
+  label: string; // 버튼에 표시할 한국어 이름
+  promptPhrase: string; // 최종 AI 프롬프트(영문)에 들어갈 동작 표현
 }
 
 export const CAMERA_MOVE_PRESETS: CameraMovePreset[] = [
-  { id: "static", label: "Static", promptPhrase: "the camera holds completely still" },
-  { id: "panLeft", label: "Pan Left", promptPhrase: "the camera pans left" },
-  { id: "panRight", label: "Pan Right", promptPhrase: "the camera pans right" },
-  { id: "tiltUp", label: "Tilt Up", promptPhrase: "the camera tilts upward" },
-  { id: "tiltDown", label: "Tilt Down", promptPhrase: "the camera tilts downward" },
-  { id: "dollyIn", label: "Dolly In", promptPhrase: "the camera dollies in toward the subject" },
-  { id: "dollyOut", label: "Dolly Out", promptPhrase: "the camera dollies out away from the subject" },
-  { id: "trackLeft", label: "Track Left", promptPhrase: "the camera tracks left alongside the subject" },
-  { id: "trackRight", label: "Track Right", promptPhrase: "the camera tracks right alongside the subject" },
-  { id: "arc", label: "Arc", promptPhrase: "the camera arcs around the subject" },
-  { id: "handheld", label: "Handheld", promptPhrase: "the camera moves with subtle handheld drift" },
+  { id: "static", label: "정지", promptPhrase: "the camera holds completely still" },
+  { id: "panLeft", label: "팬 왼쪽", promptPhrase: "the camera pans left" },
+  { id: "panRight", label: "팬 오른쪽", promptPhrase: "the camera pans right" },
+  { id: "tiltUp", label: "틸트 업", promptPhrase: "the camera tilts upward" },
+  { id: "tiltDown", label: "틸트 다운", promptPhrase: "the camera tilts downward" },
+  { id: "dollyIn", label: "달리 인", promptPhrase: "the camera dollies in toward the subject" },
+  { id: "dollyOut", label: "달리 아웃", promptPhrase: "the camera dollies out away from the subject" },
+  { id: "trackLeft", label: "트랙 왼쪽", promptPhrase: "the camera tracks left alongside the subject" },
+  { id: "trackRight", label: "트랙 오른쪽", promptPhrase: "the camera tracks right alongside the subject" },
+  { id: "arc", label: "아크", promptPhrase: "the camera arcs around the subject" },
+  { id: "handheld", label: "핸드헬드", promptPhrase: "the camera moves with subtle handheld drift" },
 ];
 
 export const MOVE_INTENSITY_OPTIONS: {

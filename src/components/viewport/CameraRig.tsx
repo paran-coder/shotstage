@@ -147,10 +147,11 @@ export function CameraRig() {
     if (keys.has("e")) posRef.current.y += VERTICAL_SPEED * delta;
 
     if (viewMode === "bird") {
-      // Bird's-eye 뷰: posRef/yaw/pitch는 건드리지 않고, 렌더링되는 카메라만 위에서 내려다보는 시점으로 오버라이드
-      const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
-      camera.position.set(subjectPos.x, 9, subjectPos.z + 0.001);
-      camera.lookAt(subjectPos.x, 0, subjectPos.z);
+      // Bird's-eye 뷰: WASD/Q,E로 움직인 posRef를 그대로 활용해 평면 이동 + 고도 조절이 가능하게 한다.
+      // (Shot view로 돌아가면 posRef/yaw/pitch가 그대로 남아있어 원래 시점이 복원된다)
+      const birdHeight = Math.max(3, posRef.current.y + 6);
+      camera.position.set(posRef.current.x, birdHeight, posRef.current.z);
+      camera.lookAt(posRef.current.x, 0, posRef.current.z);
     } else {
       camera.position.copy(posRef.current);
       camera.quaternion.setFromEuler(

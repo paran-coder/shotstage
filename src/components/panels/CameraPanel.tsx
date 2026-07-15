@@ -16,10 +16,10 @@ export function CameraPanel() {
   const currentMm = fovToMm(fov);
 
   return (
-    <PanelSection title="CAMERA">
+    <PanelSection title="카메라">
       <div className="mb-3">
         <div className="mb-1.5 flex items-center justify-between text-xs text-neutral-400">
-          <span>Lens (FOV)</span>
+          <span>렌즈 (화각)</span>
           <span className="text-neutral-200">{Math.round(fov)}°</span>
         </div>
         <input
@@ -52,7 +52,7 @@ export function CameraPanel() {
       </div>
 
       <div className="mb-3">
-        <div className="mb-1.5 text-xs text-neutral-400">Aspect ratio</div>
+        <div className="mb-1.5 text-xs text-neutral-400">화각비</div>
         <div className="flex flex-wrap gap-1.5">
           {ASPECT_RATIO_ORDER.map((ratio) => {
             const active = aspectRatio === ratio;
@@ -82,7 +82,7 @@ export function CameraPanel() {
         onClick={requestRecenter}
         className="w-full rounded-md bg-neutral-900 px-3 py-2 text-sm text-neutral-200 transition-colors hover:bg-neutral-800"
       >
-        Recenter on subject
+        피사체 중심으로 재정렬
       </button>
     </PanelSection>
   );

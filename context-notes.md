@@ -50,7 +50,20 @@
 - **수정**: 더미 오브젝트를 `new THREE.Object3D()` 대신 `new THREE.PerspectiveCamera()`로 교체(샷 프리셋 스냅, Recenter 두 곳 모두), 초기 `yawRef` 값을 `Math.PI`에서 `0`으로 수정. Bird's-eye 뷰의 `camera.lookAt()`은 실제 카메라 인스턴스에 직접 호출한 것이라 원래부터 문제 없었음.
 - **교훈**: three.js에서 임의의 오브젝트 방향을 "카메라가 어딘가를 보게 하고 싶을 때"의 참조용으로 계산할 때는 반드시 `Camera`(또는 `isCamera: true`인) 인스턴스를 더미로 써야 한다. 일반 `Object3D`로 대체하면 회전이 반대로 나온다.
 
+## v1.1.0 — 사용자 피드백 5건 반영 (2026-07-15)
+1. **이미지 모델에 미드저니 누락**: `IMAGE_MODELS` 목록에 `Midjourney` 추가.
+2. **3D 모델이 못생김 → 사람 모양으로 변경**: 기존의 뭉툭한 로봇형 캡슐 조합 대신, 실제 사진작가들이 카메라 블로킹용으로 쓰는 "목재 관절 아트 마네킹"을 참고해 재설계했다. 머리-목-어깨관절-가슴-허리-골반-팔(위팔/팔꿈치/아래팔/손)-다리(허벅지/무릎/종아리/발) 구조로 사람 비율에 가깝게 나누고, 관절 부위에 구슬 모양을 넣어 아트 마네킹 특유의 실루엣을 표현했다. 색도 로봇 같은 무채색 그레이 대신 따뜻한 우드톤(`#cbb28f`)으로 바꿨다. 다만 이 환경엔 헤드리스 브라우저가 없어 실제 렌더링 결과를 직접 보고 다듬지는 못했다 — 로컬에서 확인 후 비율이 어색하면 알려달라고 요청할 것.
+3. **Two Shot 선택 후 다시 한 명으로 못 돌아가는 버그**: `setShotType`에서 `showSecondSubject`를 `preset.showSecondSubjectByDefault ?? 기존값` 방식으로 처리하고 있었는데, Two Shot/Over Shoulder가 아닌 프리셋들은 `showSecondSubjectByDefault`가 `undefined`라 "기존값을 그대로 유지"하는 방향으로 동작했다. 즉 한 번 Two Shot을 눌러 두 번째 피사체가 켜지면, 이후 다른 샷 타입으로 바꿔도 계속 두 명이 나왔다. 모든 프리셋에 `showSecondSubjectByDefault: boolean`을 명시적으로 지정하고, `setShotType`이 항상 그 값으로 덮어쓰도록 수정했다 (Two Shot/Over Shoulder만 `true`, 나머지는 `false`). 물론 SUBJECT 패널의 체크박스로 언제든 수동으로도 켜고 끌 수 있다.
+4. **메뉴 한국어화**: 애초에 "한국어로 만들겠다"고 했었는데 패널 UI(SHOT TYPE/CAMERA/SUBJECT/PROMPT 등)를 영문 그대로 만든 걸 사용자가 지적함. 헤더는 이미 한국어였지만 나머지를 놓쳤던 실수. 아래처럼 나눠서 처리했다.
+   - **UI 라벨/버튼/메뉴**: 전부 한국어로 번역 (예: "Lens (FOV)" → "렌즈 (화각)", "Recenter on subject" → "피사체 중심으로 재정렬", 샷 타입 버튼도 "미디엄 샷/와이드 샷/클로즈업/..." 등).
+   - **HUD 라벨(뷰포트 위 오버레이)**: `SHOT_PRESETS`에 `label`(한국어 표시용)과 `promptName`(영문, AI 프롬프트용)을 분리해뒀던 구조를 활용해, HUD는 `label` + 한국어 앵글 라벨(`ANGLE_LABEL_KO`)을 쓰도록 변경. 예) "투 샷 · 정면 · 아이레벨 · 43mm".
+   - **최종 AI 프롬프트 텍스트(결과 모달에 뜨는 영문 문장)는 의도적으로 영문 그대로 유지**했다. GPT Image/Higgsfield 등 대상 AI 툴들이 영문 프롬프트에 더 최적화되어 있다고 보고, "메뉴는 한국어, 실제 생성 프롬프트는 영문"으로 역할을 나눈 것. Subject/Environment/Look-style 입력창의 placeholder 예시도 같은 이유로 영문 그대로 뒀다. 이 부분은 명시적으로 사용자에게 확인이 필요한 결정이라 대화창에서 알림.
+   - 브랜드/모델 고유명사(GPT Image 2, Midjourney, Higgsfield, Runway, Kling, SHOTSTAGE 등)는 번역하지 않음.
+5. **버드아이 모드에서 화면 이동 안 됨**: 기존엔 Bird's-eye일 때 카메라를 피사체 바로 위 고정 좌표(subjectPos, 높이 9)로 매 프레임 강제 고정해서, WASD를 눌러도 화면이 안 움직였다. `posRef`(WASD/Q,E로 계속 갱신되는 실제 카메라 위치)를 그대로 활용해 x/z는 평면 이동, y는 고도(줌 느낌)로 쓰도록 수정 — `camera.position.set(posRef.x, max(3, posRef.y+6), posRef.z)`. Shot view로 돌아가면 posRef가 그대로 남아있어 원래 시점이 복원되는 기존 설계는 유지됨.
+
 ## 확인되지 않은 가정 (오픈 이슈, PRD 9절과 동일)
+
+
 
 - 원본이 mm ↔ FOV(도) 환산 로직을 이미 갖고 있는지 미확인. UI에 두 단위가 혼용되어 있어(FOV 슬라이더가 도 단위, 라벨은 mm 단위) 있다고 가정하고 렌즈 프리셋을 설계함.
 - 캐릭터/환경 참조 이미지를 IndexedDB에 저장할 때 브라우저별 용량 제한을 고려해 리사이즈/압축이 필요할 수 있음. 아직 구체적인 리사이즈 기준(최대 해상도 등)은 정하지 않음 — 구현 시점에 결정 필요.

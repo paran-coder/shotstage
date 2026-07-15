@@ -43,7 +43,7 @@ export function ViewportOverlay() {
               : "text-neutral-300 hover:text-white"
           }`}
         >
-          Shot view
+          샷 뷰
         </button>
         <button
           onClick={() => setViewMode("bird")}
@@ -53,7 +53,7 @@ export function ViewportOverlay() {
               : "text-neutral-300 hover:text-white"
           }`}
         >
-          Bird&apos;s-eye
+          버드아이
         </button>
       </div>
 

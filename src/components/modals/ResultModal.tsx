@@ -35,7 +35,7 @@ export function ResultModal() {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-md rounded-lg border border-neutral-800 bg-neutral-950 p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-neutral-100">Your shot is ready</h2>
+          <h2 className="text-sm font-semibold text-neutral-100">샷이 준비됐어요</h2>
           <button
             onClick={closeResultModal}
             className="text-neutral-500 hover:text-neutral-200"
@@ -57,8 +57,8 @@ export function ResultModal() {
         </div>
 
         <div className="mb-1 flex items-center gap-2 text-xs">
-          <span className="font-medium text-neutral-400">PROMPT</span>
-          {copied && <span className="text-accent">copied</span>}
+          <span className="font-medium text-neutral-400">프롬프트</span>
+          {copied && <span className="text-accent">복사됨</span>}
         </div>
         <div className="mb-3 max-h-40 overflow-y-auto rounded-md border border-neutral-800 bg-neutral-900 p-3 text-xs leading-relaxed text-neutral-300">
           {promptText}
@@ -69,13 +69,13 @@ export function ResultModal() {
             onClick={handleCopy}
             className="rounded-md bg-neutral-900 px-3 py-2 text-xs font-medium text-neutral-200 hover:bg-neutral-800"
           >
-            {copied ? "Copied ✓" : "Copy prompt"}
+            {copied ? "복사됨 ✓" : "프롬프트 복사"}
           </button>
           <button
             onClick={handleDownload}
             className="rounded-md bg-neutral-900 px-3 py-2 text-xs font-medium text-neutral-200 hover:bg-neutral-800"
           >
-            Download frame
+            프레임 다운로드
           </button>
         </div>
 
@@ -85,7 +85,7 @@ export function ResultModal() {
           rel="noreferrer"
           className="mb-2 block rounded-md bg-gradient-to-b from-orange-400 to-accent px-4 py-2.5 text-center text-sm font-semibold text-black hover:opacity-90"
         >
-          Create in Higgsfield →
+          Higgsfield에서 만들기 →
         </a>
         <p className="text-center text-[11px] leading-relaxed text-neutral-600">
           Higgsfield에서 프롬프트를 붙여넣고 이 프레임을 레퍼런스 이미지로 추가하세요.

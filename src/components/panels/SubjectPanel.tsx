@@ -45,23 +45,23 @@ export function SubjectPanel() {
   const setSubject = useShotStore((s) => s.setSubject);
 
   return (
-    <PanelSection title="SUBJECT">
+    <PanelSection title="피사체">
       <SliderRow
-        label="Left / right"
+        label="좌우"
         value={Math.round(subject.leftRight * 100)}
         min={-100}
         max={100}
         onChange={(v) => setSubject({ leftRight: v / 100 })}
       />
       <SliderRow
-        label="Depth"
+        label="깊이"
         value={Math.round(subject.depth * 100)}
         min={-100}
         max={100}
         onChange={(v) => setSubject({ depth: v / 100 })}
       />
       <SliderRow
-        label="Rotate"
+        label="회전"
         value={subject.rotate}
         min={-180}
         max={180}
@@ -75,7 +75,7 @@ export function SubjectPanel() {
           onChange={(e) => setSubject({ showSecondSubject: e.target.checked })}
           className="h-3.5 w-3.5 accent-orange-500"
         />
-        Show second subject
+        두 번째 피사체 표시
       </label>
     </PanelSection>
   );

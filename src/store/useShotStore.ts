@@ -114,8 +114,7 @@ export const useShotStore = create<ShotStoreState>((set, get) => ({
       },
       subject: {
         ...get().subject,
-        showSecondSubject:
-          preset.showSecondSubjectByDefault ?? get().subject.showSecondSubject,
+        showSecondSubject: preset.showSecondSubjectByDefault,
       },
     });
   },
