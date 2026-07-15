@@ -1,9 +1,12 @@
 // 관절 마네킹: 향후 "관절을 움직이는" 기능을 붙일 수 있도록, 각 관절이 부모-자식으로
 // 이어지는 계층 구조(그룹 중첩)로 만들어졌다. 예) 어깨 그룹을 돌리면 팔꿈치·손까지 함께 따라간다.
-// 외형은 사용자가 제공한 참고 이미지(둥근 어깨 캡, 허리 밴드, 무릎/팔꿈치 캡, 주먹손,
-// 신발 형태의 발)를 참고해 구성했다. 색/자세는 참고하지 않고 실루엣만 반영.
-// 지금은 모든 관절 회전값이 기본(0,0,0)으로 고정된 중립 자세지만, 각 관절 그룹은
-// rotation prop을 그대로 받게 설계해서 나중에 값만 넣으면 바로 포즈를 바꿀 수 있다.
+//
+// 외형(실루엣)은 사용자가 제공한 참고 이미지(구체관절인형 스타일)를 기준으로 잡았다.
+// 이전 버전은 몸통이 위아래로 굵기가 똑같은 "알약(캡슐)" 한 덩어리라 뭉툭해 보였는데,
+// 이번엔 가슴(넓음) → 허리(좁음)로 이어지는 두 단계 테이퍼, 얇은 벨트 라인, 팔/다리의
+// 위(굵음)-아래(가늚) 테이퍼, 길쭉한 신발 모양 발로 실루엣 자체를 다시 잡았다.
+// 색/자세는 참고하지 않음(사용자 요청). 각 관절 y좌표는 기존 카메라 프리셋과 어긋나지
+// 않도록 이전 버전과 동일하게 유지했고, 반지름/비율만 조정했다.
 "use client";
 
 import { useMemo } from "react";
@@ -36,11 +39,8 @@ export function Mannequin({
 }: {
   position?: [number, number, number];
   rotationY?: number;
-  /** 인물 1/2를 구분하기 위한 몸통 색. lib/subjectColors.ts의 값을 그대로 넘기면
-   *  SUBJECT 패널의 슬라이더 색과 정확히 일치한다. */
   bodyColor?: string;
   jointColor?: string;
-  /** 관절별 회전(라디안). 나중에 "관절 움직이기" 기능에서 이 prop만 채워주면 된다. */
   pose?: MannequinPose;
 }) {
   const bodyMat = useMemo(
@@ -48,7 +48,7 @@ export function Mannequin({
     [bodyColor],
   );
   const jointMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: jointColor, roughness: 0.55 }),
+    () => new THREE.MeshStandardMaterial({ color: jointColor, roughness: 0.3 }),
     [jointColor],
   );
 
@@ -57,162 +57,162 @@ export function Mannequin({
       {/* ── 골반(hips) — 몸 전체의 뿌리 관절 ── */}
       <group position={[0, 0.9, 0]}>
         <mesh material={bodyMat} castShadow>
-          <sphereGeometry args={[0.18, 18, 18]} />
-        </mesh>
-        {/* 사타구니 중앙 시접 느낌의 세로 밴드 */}
-        <mesh position={[0, -0.02, 0.14]} material={jointMat}>
-          <boxGeometry args={[0.025, 0.16, 0.02]} />
+          <sphereGeometry args={[0.16, 18, 18]} />
         </mesh>
 
-        {/* ── 척추(spine/chest) ── */}
+        {/* ── 척추(spine) — 가슴(넓음) → 허리(좁음) 2단 테이퍼 ── */}
         <group position={[0, 0.4, 0]}>
-          <mesh material={bodyMat} castShadow>
-            <capsuleGeometry args={[0.19, 0.24, 6, 14]} />
+          {/* 가슴 (위쪽, 넓게) */}
+          <mesh position={[0, 0.08, 0]} material={bodyMat} castShadow>
+            <capsuleGeometry args={[0.18, 0.12, 6, 14]} />
           </mesh>
-
-          {/* 허리 밴드 (가슴과 골반 경계) */}
-          <mesh position={[0, -0.24, 0]} rotation={[Math.PI / 2, 0, 0]} material={jointMat}>
-            <torusGeometry args={[0.19, 0.03, 10, 24]} />
+          {/* 허리 (아래쪽, 좁게 — 가슴과 골반을 자연스럽게 잇는 테이퍼) */}
+          <mesh position={[0, -0.19, 0]} material={bodyMat} castShadow>
+            <capsuleGeometry args={[0.13, 0.08, 6, 14]} />
+          </mesh>
+          {/* 허리 벨트 라인 (얇게 — 굵은 도넛이 아니라 슬림한 띠) */}
+          <mesh position={[0, -0.11, 0]} rotation={[Math.PI / 2, 0, 0]} material={jointMat}>
+            <torusGeometry args={[0.145, 0.013, 8, 24]} />
           </mesh>
 
           {/* 어깨선을 가로지르는 칼라 밴드 */}
           <mesh position={[0, 0.17, 0.05]} rotation={[0, 0, Math.PI / 2]} material={jointMat}>
-            <capsuleGeometry args={[0.045, 0.34, 4, 10]} />
+            <capsuleGeometry args={[0.04, 0.32, 4, 10]} />
           </mesh>
 
           {/* 목 관절 */}
           <group position={[0, 0.22, 0]} rotation={pose.neck ?? ZERO}>
             <mesh material={bodyMat}>
-              <sphereGeometry args={[0.065, 16, 16]} />
+              <sphereGeometry args={[0.058, 16, 16]} />
             </mesh>
-            {/* 머리 */}
+            {/* 머리 — 완전한 구 대신 살짝 갸름한 타원형 */}
             <group position={[0, 0.14, 0]}>
-              <mesh material={bodyMat} castShadow>
-                <sphereGeometry args={[0.13, 24, 24]} />
+              <mesh material={bodyMat} castShadow scale={[1, 1.18, 0.95]}>
+                <sphereGeometry args={[0.115, 24, 24]} />
               </mesh>
-              <mesh position={[-0.048, 0.02, 0.11]}>
-                <sphereGeometry args={[0.014, 8, 8]} />
+              <mesh position={[-0.045, 0.03, 0.105]}>
+                <sphereGeometry args={[0.013, 8, 8]} />
                 <meshBasicMaterial color={EYE_COLOR} />
               </mesh>
-              <mesh position={[0.048, 0.02, 0.11]}>
-                <sphereGeometry args={[0.014, 8, 8]} />
+              <mesh position={[0.045, 0.03, 0.105]}>
+                <sphereGeometry args={[0.013, 8, 8]} />
                 <meshBasicMaterial color={EYE_COLOR} />
               </mesh>
             </group>
           </group>
 
           {/* ── 왼쪽 어깨 관절 → 팔꿈치 관절 → 손 ── */}
-          <group position={[-0.24, 0.15, 0]} rotation={pose.leftShoulder ?? ZERO}>
-            {/* 둥근 어깨 캡 (참고 이미지처럼 팔과 자연스럽게 이어지도록 크게) */}
+          <group position={[-0.23, 0.16, 0]} rotation={pose.leftShoulder ?? ZERO}>
             <mesh material={bodyMat} castShadow>
-              <sphereGeometry args={[0.1, 16, 16]} />
+              <sphereGeometry args={[0.09, 16, 16]} />
             </mesh>
-            <mesh position={[-0.02, -0.14, 0.02]} rotation={[0, 0, 0.16]} material={bodyMat} castShadow>
-              <capsuleGeometry args={[0.062, 0.24, 4, 10]} />
+            {/* 위팔 (굵게) */}
+            <mesh position={[-0.02, -0.13, 0.02]} rotation={[0, 0, 0.15]} material={bodyMat} castShadow>
+              <capsuleGeometry args={[0.06, 0.22, 4, 10]} />
             </mesh>
 
-            <group position={[-0.06, -0.29, 0.02]} rotation={pose.leftElbow ?? ZERO}>
-              {/* 팔꿈치: 완전한 구체 관절 (구체관절인형처럼 아래팔보다 확실히 굵게) */}
+            <group position={[-0.05, -0.27, 0.02]} rotation={pose.leftElbow ?? ZERO}>
               <mesh material={jointMat}>
-                <sphereGeometry args={[0.072, 16, 16]} />
+                <sphereGeometry args={[0.068, 16, 16]} />
               </mesh>
-              <mesh position={[0, -0.12, -0.01]} material={bodyMat} castShadow>
-                <capsuleGeometry args={[0.05, 0.2, 4, 10]} />
+              {/* 아래팔 (위팔보다 확실히 가늘게) */}
+              <mesh position={[0, -0.11, -0.01]} material={bodyMat} castShadow>
+                <capsuleGeometry args={[0.042, 0.18, 4, 10]} />
               </mesh>
-              {/* 손목: 완전한 구체 관절 */}
-              <mesh position={[-0.005, -0.22, -0.02]} material={jointMat}>
-                <sphereGeometry args={[0.05, 12, 12]} />
+              <mesh position={[-0.005, -0.21, -0.02]} material={jointMat}>
+                <sphereGeometry args={[0.046, 12, 12]} />
               </mesh>
-              <mesh position={[-0.01, -0.28, -0.02]} material={bodyMat} castShadow>
-                <sphereGeometry args={[0.065, 12, 12]} />
+              {/* 주먹 */}
+              <mesh position={[-0.01, -0.27, -0.02]} material={bodyMat} castShadow>
+                <sphereGeometry args={[0.06, 12, 12]} />
               </mesh>
             </group>
           </group>
 
           {/* ── 오른쪽 어깨 관절 → 팔꿈치 관절 → 손 (왼쪽 미러) ── */}
-          <group position={[0.24, 0.15, 0]} rotation={pose.rightShoulder ?? ZERO}>
+          <group position={[0.23, 0.16, 0]} rotation={pose.rightShoulder ?? ZERO}>
             <mesh material={bodyMat} castShadow>
-              <sphereGeometry args={[0.1, 16, 16]} />
+              <sphereGeometry args={[0.09, 16, 16]} />
             </mesh>
-            <mesh position={[0.02, -0.14, 0.02]} rotation={[0, 0, -0.16]} material={bodyMat} castShadow>
-              <capsuleGeometry args={[0.062, 0.24, 4, 10]} />
+            <mesh position={[0.02, -0.13, 0.02]} rotation={[0, 0, -0.15]} material={bodyMat} castShadow>
+              <capsuleGeometry args={[0.06, 0.22, 4, 10]} />
             </mesh>
 
-            <group position={[0.06, -0.29, 0.02]} rotation={pose.rightElbow ?? ZERO}>
+            <group position={[0.05, -0.27, 0.02]} rotation={pose.rightElbow ?? ZERO}>
               <mesh material={jointMat}>
-                <sphereGeometry args={[0.072, 16, 16]} />
+                <sphereGeometry args={[0.068, 16, 16]} />
               </mesh>
-              <mesh position={[0, -0.12, -0.01]} material={bodyMat} castShadow>
-                <capsuleGeometry args={[0.05, 0.2, 4, 10]} />
+              <mesh position={[0, -0.11, -0.01]} material={bodyMat} castShadow>
+                <capsuleGeometry args={[0.042, 0.18, 4, 10]} />
               </mesh>
-              <mesh position={[0.005, -0.22, -0.02]} material={jointMat}>
-                <sphereGeometry args={[0.05, 12, 12]} />
+              <mesh position={[0.005, -0.21, -0.02]} material={jointMat}>
+                <sphereGeometry args={[0.046, 12, 12]} />
               </mesh>
-              <mesh position={[0.01, -0.28, -0.02]} material={bodyMat} castShadow>
-                <sphereGeometry args={[0.065, 12, 12]} />
+              <mesh position={[0.01, -0.27, -0.02]} material={bodyMat} castShadow>
+                <sphereGeometry args={[0.06, 12, 12]} />
               </mesh>
             </group>
           </group>
         </group>
 
         {/* ── 왼쪽 고관절 → 무릎 관절 → 발 ── */}
-        <group position={[-0.12, -0.08, 0]} rotation={pose.leftHip ?? ZERO}>
+        <group position={[-0.11, -0.08, 0]} rotation={pose.leftHip ?? ZERO}>
           <mesh material={bodyMat} castShadow>
-            <sphereGeometry args={[0.1, 16, 16]} />
+            <sphereGeometry args={[0.095, 16, 16]} />
           </mesh>
+          {/* 허벅지 (굵게) */}
           <mesh position={[0, -0.2, 0]} material={bodyMat} castShadow>
-            <capsuleGeometry args={[0.1, 0.3, 4, 12]} />
+            <capsuleGeometry args={[0.098, 0.3, 4, 12]} />
           </mesh>
 
           <group position={[0, -0.4, 0]} rotation={pose.leftKnee ?? ZERO}>
-            {/* 무릎: 완전한 구체 관절 (구체관절인형처럼 종아리보다 확실히 굵게) */}
             <mesh material={jointMat}>
-              <sphereGeometry args={[0.098, 18, 18]} />
+              <sphereGeometry args={[0.09, 16, 16]} />
             </mesh>
+            {/* 종아리 (허벅지보다 확실히 가늘게) */}
             <mesh position={[0, -0.16, 0]} material={bodyMat} castShadow>
-              <capsuleGeometry args={[0.078, 0.28, 4, 12]} />
+              <capsuleGeometry args={[0.062, 0.28, 4, 12]} />
             </mesh>
-            {/* 발목: 완전한 구체 관절 */}
             <mesh position={[0, -0.32, 0]} material={jointMat}>
-              <sphereGeometry args={[0.062, 12, 12]} />
+              <sphereGeometry args={[0.05, 12, 12]} />
             </mesh>
-            {/* 발: 뒤꿈치 + 앞으로 갈수록 좁아지는 발끝 */}
-            <group position={[0, -0.37, 0.03]}>
-              <mesh position={[0, 0, 0]} material={bodyMat} castShadow>
-                <boxGeometry args={[0.1, 0.075, 0.16]} />
+            {/* 발: 뒤꿈치 블록 + 길게 뻗은 발끝 블록 (신발 실루엣) */}
+            <group position={[0, -0.37, 0.02]}>
+              <mesh position={[0, 0, -0.02]} material={bodyMat} castShadow>
+                <boxGeometry args={[0.09, 0.07, 0.11]} />
               </mesh>
-              <mesh position={[0, -0.01, 0.13]} rotation={[0.35, 0, 0]} material={bodyMat} castShadow>
-                <boxGeometry args={[0.09, 0.06, 0.13]} />
+              <mesh position={[0, -0.015, 0.11]} rotation={[0.18, 0, 0]} material={bodyMat} castShadow>
+                <boxGeometry args={[0.08, 0.05, 0.19]} />
               </mesh>
             </group>
           </group>
         </group>
 
         {/* ── 오른쪽 고관절 → 무릎 관절 → 발 (왼쪽 미러) ── */}
-        <group position={[0.12, -0.08, 0]} rotation={pose.rightHip ?? ZERO}>
+        <group position={[0.11, -0.08, 0]} rotation={pose.rightHip ?? ZERO}>
           <mesh material={bodyMat} castShadow>
-            <sphereGeometry args={[0.1, 16, 16]} />
+            <sphereGeometry args={[0.095, 16, 16]} />
           </mesh>
           <mesh position={[0, -0.2, 0]} material={bodyMat} castShadow>
-            <capsuleGeometry args={[0.1, 0.3, 4, 12]} />
+            <capsuleGeometry args={[0.098, 0.3, 4, 12]} />
           </mesh>
 
           <group position={[0, -0.4, 0]} rotation={pose.rightKnee ?? ZERO}>
             <mesh material={jointMat}>
-              <sphereGeometry args={[0.098, 18, 18]} />
+              <sphereGeometry args={[0.09, 16, 16]} />
             </mesh>
             <mesh position={[0, -0.16, 0]} material={bodyMat} castShadow>
-              <capsuleGeometry args={[0.078, 0.28, 4, 12]} />
+              <capsuleGeometry args={[0.062, 0.28, 4, 12]} />
             </mesh>
             <mesh position={[0, -0.32, 0]} material={jointMat}>
-              <sphereGeometry args={[0.062, 12, 12]} />
+              <sphereGeometry args={[0.05, 12, 12]} />
             </mesh>
-            <group position={[0, -0.37, 0.03]}>
-              <mesh position={[0, 0, 0]} material={bodyMat} castShadow>
-                <boxGeometry args={[0.1, 0.075, 0.16]} />
+            <group position={[0, -0.37, 0.02]}>
+              <mesh position={[0, 0, -0.02]} material={bodyMat} castShadow>
+                <boxGeometry args={[0.09, 0.07, 0.11]} />
               </mesh>
-              <mesh position={[0, -0.01, 0.13]} rotation={[0.35, 0, 0]} material={bodyMat} castShadow>
-                <boxGeometry args={[0.09, 0.06, 0.13]} />
+              <mesh position={[0, -0.015, 0.11]} rotation={[0.18, 0, 0]} material={bodyMat} castShadow>
+                <boxGeometry args={[0.08, 0.05, 0.19]} />
               </mesh>
             </group>
           </group>

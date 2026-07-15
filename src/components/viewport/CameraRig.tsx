@@ -48,6 +48,10 @@ export function CameraRig() {
   const orbitRadiusRef = useRef(2.8);
 
   // Bird's-eye 전용 상태 (궤도 회전과 완전히 분리)
+  // birdCenterBaseRef: pivotBaseRef와 동일한 이유로, 버드아이 중심의 "피사체 기준 위치"도
+  // 스냅 시점에만 고정한다. (라이브로 추적하면 SUBJECT 슬라이더 조작 시 카메라가 쫓아가서
+  // 배경이 움직이는 것처럼 보이는 동일한 문제가 생긴다.)
+  const birdCenterBaseRef = useRef(new THREE.Vector2(0, 0));
   const birdPanRef = useRef(new THREE.Vector2(0, 0));
   const birdHeightRef = useRef(6);
 
@@ -222,7 +226,8 @@ export function CameraRig() {
     // 화면 안에서 움직이는 것으로 보인다 (카메라가 쫓아가며 항상 중앙에 고정하지 않음).
     pivotBaseRef.current.copy(focal);
     pivotOffsetRef.current.set(0, 0, 0);
-    // Bird's-eye 중심도 같이 리셋해서, 버드아이 뷰 상태에서 샷을 바꿔도 인물이 바로 중심에 오게 한다.
+    // Bird's-eye 중심 기준점도 이 순간의 피사체 위치로 고정한다 (샷을 바꾸면 항상 인물이 중심에서 시작).
+    birdCenterBaseRef.current.set(subjectPos.x, subjectPos.z);
     birdPanRef.current.set(0, 0);
 
     // 일반 Object3D.lookAt()은 Camera.lookAt()과 방향 계산이 반대라, 카메라 계열
@@ -266,9 +271,8 @@ export function CameraRig() {
       if (keys.has("q")) birdHeightRef.current = Math.max(0.5, birdHeightRef.current - VERTICAL_SPEED * delta);
       if (keys.has("e")) birdHeightRef.current += VERTICAL_SPEED * delta;
 
-      const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
-      const centerX = subjectPos.x + birdPanRef.current.x;
-      const centerZ = subjectPos.z + birdPanRef.current.y;
+      const centerX = birdCenterBaseRef.current.x + birdPanRef.current.x;
+      const centerZ = birdCenterBaseRef.current.y + birdPanRef.current.y;
       camera.position.set(centerX, birdHeightRef.current, centerZ);
       camera.lookAt(centerX, 0, centerZ);
     } else {
