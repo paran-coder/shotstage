@@ -50,6 +50,13 @@ export interface SubjectState {
   showSecondSubject: boolean;
 }
 
+/** 두 번째 피사체(대화 상대) 전용 위치 상태 — 첫 번째 피사체와 독립적으로 조정 가능 */
+export interface SecondSubjectState {
+  leftRight: number;
+  depth: number;
+  rotate: number;
+}
+
 export interface VideoMoveState {
   moveType: CameraMoveId;
   intensity: MoveIntensity;

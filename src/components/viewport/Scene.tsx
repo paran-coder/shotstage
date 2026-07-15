@@ -8,7 +8,6 @@ import { Mannequin } from "./Mannequin";
 import { CameraRig } from "./CameraRig";
 import { FrameCapture } from "./FrameCapture";
 import { useShotStore } from "@/store/useShotStore";
-import { SECOND_SUBJECT_OFFSET } from "@/lib/shotPresets";
 
 function computeOffset(leftRight: number, depth: number): [number, number, number] {
   // 깊이(Z축)는 카메라 시선 방향과 같은 축이라 좌우 이동보다 변화가 덜 두드러진다.
@@ -18,14 +17,14 @@ function computeOffset(leftRight: number, depth: number): [number, number, numbe
 
 export function Scene() {
   const subject = useShotStore((s) => s.subject);
+  const secondSubject = useShotStore((s) => s.secondSubject);
   const showGrid = useShotStore((s) => s.showGrid);
   const [x, , z] = computeOffset(subject.leftRight, subject.depth);
   const rotationY = (subject.rotate * Math.PI) / 180;
 
-  const secondX = x + SECOND_SUBJECT_OFFSET.x;
-  const secondZ = z + SECOND_SUBJECT_OFFSET.z;
-  // 두 번째 피사체는 첫 번째 피사체 쪽을 바라보도록 회전 (서로 마주보는 자연스러운 구도)
-  const secondRotationY = Math.atan2(x - secondX, z - secondZ);
+  // 두 번째 피사체는 첫 번째 피사체와 완전히 독립된 좌우/깊이/회전 슬라이더로 조정한다.
+  const [secondX, , secondZ] = computeOffset(secondSubject.leftRight, secondSubject.depth);
+  const secondRotationY = (secondSubject.rotate * Math.PI) / 180;
 
   return (
     <Canvas

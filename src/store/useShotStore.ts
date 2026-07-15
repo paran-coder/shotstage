@@ -5,11 +5,12 @@ import type {
   CameraMoveId,
   MoveIntensity,
   PromptFieldsState,
+  SecondSubjectState,
   ShotTypeId,
   SubjectState,
   VideoMoveState,
 } from "@/types";
-import { SHOT_PRESETS } from "@/lib/shotPresets";
+import { SECOND_SUBJECT_DEFAULT, SHOT_PRESETS } from "@/lib/shotPresets";
 
 export type ViewMode = "shot" | "bird";
 
@@ -30,6 +31,7 @@ interface ShotStoreState {
   fov: number;
   aspectRatio: AspectRatioId;
   subject: SubjectState;
+  secondSubject: SecondSubjectState;
   videoMove: VideoMoveState;
   prompt: PromptFieldsState;
   /** 카메라를 특정 프리셋으로 스냅해달라는 일회성 요청 (컨트롤러가 소비 후 null로 되돌림) */
@@ -52,6 +54,7 @@ interface ShotStoreState {
   toggleGrid: () => void;
   toggleLabels: () => void;
   setSubject: (patch: Partial<SubjectState>) => void;
+  setSecondSubject: (patch: Partial<SecondSubjectState>) => void;
   setVideoMove: (patch: Partial<VideoMoveState>) => void;
   setPrompt: (patch: Partial<PromptFieldsState>) => void;
   requestRecenter: () => void;
@@ -78,6 +81,7 @@ export const useShotStore = create<ShotStoreState>((set, get) => ({
     rotate: 0,
     showSecondSubject: false,
   },
+  secondSubject: { ...SECOND_SUBJECT_DEFAULT },
   videoMove: {
     moveType: "static",
     intensity: "normal",
@@ -120,6 +124,9 @@ export const useShotStore = create<ShotStoreState>((set, get) => ({
         ...get().subject,
         showSecondSubject: preset.showSecondSubjectByDefault,
       },
+      // 샷 타입을 바꿀 때마다 두 번째 피사체 위치도 기본값으로 리셋한다.
+      // (이후 SUBJECT 패널의 "인물 2" 슬라이더로 자유롭게 재조정 가능)
+      secondSubject: { ...SECOND_SUBJECT_DEFAULT },
     });
   },
   setFov: (fov) => set({ fov }),
@@ -128,6 +135,8 @@ export const useShotStore = create<ShotStoreState>((set, get) => ({
   toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
   toggleLabels: () => set((s) => ({ showLabels: !s.showLabels })),
   setSubject: (patch) => set((s) => ({ subject: { ...s.subject, ...patch } })),
+  setSecondSubject: (patch) =>
+    set((s) => ({ secondSubject: { ...s.secondSubject, ...patch } })),
   setVideoMove: (patch) => set((s) => ({ videoMove: { ...s.videoMove, ...patch } })),
   setPrompt: (patch) => set((s) => ({ prompt: { ...s.prompt, ...patch } })),
   requestRecenter: () => set((s) => ({ recenterRequestId: s.recenterRequestId + 1 })),

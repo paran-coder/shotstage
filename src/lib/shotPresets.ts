@@ -1,5 +1,5 @@
 // 샷 타입 버튼 클릭 시 카메라가 스냅할 위치/앵글/화각 프리셋 정의
-import type { AngleLabel, ShotTypeId } from "@/types";
+import type { AngleLabel, SecondSubjectState, ShotTypeId } from "@/types";
 
 export interface ShotPreset {
   id: ShotTypeId;
@@ -15,8 +15,12 @@ export interface ShotPreset {
 
 export const SUBJECT_EYE_HEIGHT = 1.6;
 
-/** Two Shot / Over Shoulder에서 두 번째 피사체가 서는 위치 (첫 번째 피사체 기준 상대 오프셋) */
-export const SECOND_SUBJECT_OFFSET = { x: 0.9, z: 0.3 };
+/** 두 번째 피사체 표시를 켰을 때의 기본 슬라이더 값 (이후 사용자가 자유롭게 재조정 가능) */
+export const SECOND_SUBJECT_DEFAULT: SecondSubjectState = {
+  leftRight: 0.3,
+  depth: 0.5,
+  rotate: -161, // 기본 배치 기준으로 첫 번째 피사체를 바라보는 각도
+};
 
 export const ANGLE_LABEL_KO: Record<AngleLabel, string> = {
   "eye level": "아이레벨",
@@ -84,9 +88,8 @@ export const SHOT_PRESETS: Record<ShotTypeId, ShotPreset> = {
     id: "overShoulder",
     label: "오버 숄더",
     promptName: "over-the-shoulder shot",
-    // 아래 distance/heightOffset은 오버숄더에서는 쓰이지 않고(CameraRig에서 별도 계산),
-    // 다른 프리셋과 타입을 맞추기 위해 형식상 남겨둔다.
-    distance: 0.4,
+    // distance: 두 번째 피사체를 지나 얼마나 더 뒤로 물러나는지 (카메라가 인물 속에 파묻히지 않도록 충분히 확보)
+    distance: 0.75,
     heightOffset: -0.05,
     focalHeight: 1.62,
     fov: 40,
