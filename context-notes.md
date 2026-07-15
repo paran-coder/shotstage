@@ -61,7 +61,22 @@
    - 브랜드/모델 고유명사(GPT Image 2, Midjourney, Higgsfield, Runway, Kling, SHOTSTAGE 등)는 번역하지 않음.
 5. **버드아이 모드에서 화면 이동 안 됨**: 기존엔 Bird's-eye일 때 카메라를 피사체 바로 위 고정 좌표(subjectPos, 높이 9)로 매 프레임 강제 고정해서, WASD를 눌러도 화면이 안 움직였다. `posRef`(WASD/Q,E로 계속 갱신되는 실제 카메라 위치)를 그대로 활용해 x/z는 평면 이동, y는 고도(줌 느낌)로 쓰도록 수정 — `camera.position.set(posRef.x, max(3, posRef.y+6), posRef.z)`. Shot view로 돌아가면 posRef가 그대로 남아있어 원래 시점이 복원되는 기존 설계는 유지됨.
 
+## v1.2.0 — 사용자 피드백 7건 반영 (2026-07-16)
+1. **클로즈업이 얼굴에 포커스 안 됨**: `closeUp` 프리셋의 `heightOffset`이 +0.5(눈높이보다 위)였고, 카메라가 바라보는 지점(focal)이 모든 샷 타입에 하드코딩된 torso 높이 1.2였다. `ShotPreset`에 `focalHeight` 필드를 추가해 프리셋마다 바라보는 높이를 다르게 지정할 수 있게 하고, `closeUp`은 `distance: 0.9, heightOffset: 0, focalHeight: 1.62`(눈 높이)로 조정. `CameraRig`의 pendingSnap/recenter 모두 `focalHeight`를 참조하도록 수정.
+2. **오버숄더가 오버숄더가 아님 / 3. 축소하면 둘 다 같은 방향**: 두 가지가 사실 같은 원인. `SECOND_SUBJECT_OFFSET`으로 두 번째 피사체 위치를 첫 번째 피사체 대각선 앞쪽(x+0.9, z+0.3)에 두고, `Math.atan2`로 항상 첫 번째 피사체 쪽을 바라보도록 회전을 계산(Scene.tsx). 카메라 쪽은 `overShoulder` 프리셋일 때 전용 분기를 타서, "두 번째 피사체 위치에서 첫 번째 피사체 방향으로 조금 더 나아간 지점"(= 두 번째 피사체 어깨 바로 뒤)에 카메라를 두고 첫 번째 피사체의 얼굴(focalHeight)을 바라보게 했다 (`CameraRig.tsx`의 `pendingSnap.shotType === "overShoulder"` 분기). Node 스크립트로 두 인물 모두 프러스텀 안에 들어오는지, B의 회전이 실제로 A를 향하는지 수치로 검증함 (실제 렌더링 화면은 여전히 못 봄).
+3. **화각비 눌러도 변화 없음**: 로직 자체(bar 계산)는 정상이었을 가능성이 높고, 실제 원인으로 가장 유력한 건 레터박스/필러박스 바 색상이 순수 검정(#000)인데 3D 씬 배경색도 거의 검정(#05070c)이라 대비가 거의 없어서 안 보였을 것이라는 점. 바 안쪽 경계에 accent 색(주황) 보더 라인을 추가하고, 크롭이 적용되면 우측 하단에 "{비율} 크롭 적용됨" 배지를 표시하도록 함. 기본 그리드(`showGrid`)도 `true`로 바꿔서 어두운 화면에 참조선이 항상 보이게 함.
+4. **깊이 슬라이더가 안 움직이는 것처럼 느껴짐**: 슬라이더 자체 버그는 코드상 발견 못 함(좌우 슬라이더와 동일 패턴). 다만 깊이(Z축)는 카메라 시선 방향과 같은 축이라 좌우 이동보다 화면상 변화가 훨씬 약하게 느껴질 수 있음 — 좌우는 1.4m, 깊이는 2.4m 범위로 넓혀서 체감을 키움. **실제로 UI 슬라이더 핸들 자체가 반응이 없는 문제였다면 이 조치로는 해결이 안 될 수 있음 — 여전히 안 움직이면 알려달라고 요청 필요.**
+5. **캐릭터/환경시트 설명 툴팁**: 체크박스 라벨 옆에 물음표(?) 아이콘을 추가하고 `title` 속성으로 "이 시트가 무엇을 위한 것이고, 업로드하면 프롬프트에 어떤 문구가 자동으로 추가되는지"를 설명. 네이티브 브라우저 툴팁이라 별도 라이브러리 없이 구현.
+6. **참고 문서 3종 반영**: Midjourney v8.1 가이드(PDF), GPT Image 2 한국어 Knowledge 문서(md), 나노바나나 프로 AI 필름메이킹 템플릿(docx)을 각각 확인하고, `promptBuilder.ts`에 모델별 프롬프트 빌더를 분리했다.
+   - **Midjourney**: 짧고 직접적인 문장, 주 피사체를 문장 맨 앞(문법적 주어)에 배치, "use/make/create" 같은 명령형 대신 서술형, 파라미터(`--ar`, `--v 8.1`)는 맨 끝에만. 화각비는 정수비만 지원해서 `2.35:1`은 `21:9`로 근사 매핑(`MIDJOURNEY_ASPECT_MAP`).
+   - **GPT Image 2**: `[스타일/매체] → [피사체] → [배경] → [조명/분위기] → [제외 요소]` 슬롯 구조를 따르고, 문서에서 권장하는 `no extra text, no logo, no watermark` 같은 부정 프롬프트를 항상 마지막에 추가.
+   - **Nano Banana Pro**: `Composition:`/`Lighting:` 라벨 구조와 "eye-line match", "rule-of-thirds" 같은 촬영 전문 용어를 그대로 채용. 오버숄더/투샷일 때는 문서의 3번(Dialogue Two-Shot/OTS) 템플릿을 따라 "Over-the-shoulder two-shot of ... framed from the second person's shoulder" 식으로 구성. 캐릭터/환경시트가 있으면 문서의 11번(Consistency Core) 문구(`[Consistency Core]: Do not allow identity drift; force-match...`)를 그대로 채용.
+   - Higgsfield/Runway/Kling(비디오 모델)과 Flux는 참고 문서가 없어 기존 범용 템플릿(`buildGenericPrompt`)을 그대로 사용.
+- **검증 한계**: 이번에도 헤드리스 브라우저가 없어 실제 3D 렌더링 결과나 UI 인터랙션은 눈으로 확인하지 못했다. 카메라 위치/방향 계산은 매번 Node에서 `three` 패키지를 직접 불러와 프러스텀 포함 여부, 방향 벡터 일치 여부 등을 수치로 검증하는 방식으로 대체하고 있다. 실제 화면에서 어색한 부분이 있으면 스크린샷으로 계속 알려주는 게 정확한 디버깅에 필수적이다.
+
 ## 확인되지 않은 가정 (오픈 이슈, PRD 9절과 동일)
+
+
 
 
 

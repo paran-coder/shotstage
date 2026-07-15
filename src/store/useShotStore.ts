@@ -14,8 +14,10 @@ import { SHOT_PRESETS } from "@/lib/shotPresets";
 export type ViewMode = "shot" | "bird";
 
 export interface PendingSnap {
+  shotType: ShotTypeId;
   distance: number;
   heightOffset: number;
+  focalHeight: number;
   fov: number;
 }
 
@@ -66,7 +68,7 @@ export const useShotStore = create<ShotStoreState>((set, get) => ({
   shotType: "medium",
   angleLabel: SHOT_PRESETS.medium.angleLabel,
   viewMode: "shot",
-  showGrid: false,
+  showGrid: true,
   showLabels: true,
   fov: SHOT_PRESETS.medium.fov,
   aspectRatio: "16:9",
@@ -108,8 +110,10 @@ export const useShotStore = create<ShotStoreState>((set, get) => ({
       angleLabel: preset.angleLabel,
       fov: preset.fov,
       pendingSnap: {
+        shotType: id,
         distance: preset.distance,
         heightOffset: preset.heightOffset,
+        focalHeight: preset.focalHeight,
         fov: preset.fov,
       },
       subject: {

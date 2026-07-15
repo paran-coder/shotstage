@@ -146,7 +146,7 @@ export function PromptPanel() {
       </div>
 
       <div className="mb-3 space-y-2">
-        <label className="flex items-center gap-2 text-sm text-neutral-300">
+        <label className="flex items-center gap-1.5 text-sm text-neutral-300">
           <input
             type="checkbox"
             checked={prompt.hasCharacterSheet}
@@ -154,6 +154,12 @@ export function PromptPanel() {
             className="h-3.5 w-3.5 accent-orange-500"
           />
           캐릭터시트가 있어요
+          <span
+            title="인물의 얼굴·체형·의상을 고정하기 위한 참조 이미지입니다. 업로드하면 생성 시 이 이미지를 기준으로 외형을 동일하게 유지하라는 지시문이 프롬프트에 자동으로 추가됩니다."
+            className="flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-neutral-800 text-[10px] text-neutral-400"
+          >
+            ?
+          </span>
         </label>
         {prompt.hasCharacterSheet && (
           <div className="ml-5 flex items-center gap-2">
@@ -174,7 +180,7 @@ export function PromptPanel() {
           </div>
         )}
 
-        <label className="flex items-center gap-2 text-sm text-neutral-300">
+        <label className="flex items-center gap-1.5 text-sm text-neutral-300">
           <input
             type="checkbox"
             checked={prompt.hasEnvironmentSheet}
@@ -182,6 +188,12 @@ export function PromptPanel() {
             className="h-3.5 w-3.5 accent-orange-500"
           />
           환경시트가 있어요
+          <span
+            title="배경·세트의 구조와 재질을 고정하기 위한 참조 이미지입니다. 업로드하면 생성 시 이 이미지를 기준으로 환경을 동일하게 유지하라는 지시문이 프롬프트에 자동으로 추가됩니다."
+            className="flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-neutral-800 text-[10px] text-neutral-400"
+          >
+            ?
+          </span>
         </label>
         {prompt.hasEnvironmentSheet && (
           <div className="ml-5 flex items-center gap-2">

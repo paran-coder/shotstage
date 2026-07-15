@@ -48,11 +48,11 @@ export function AspectRatioMask({
       {barTop > 0 && (
         <>
           <div
-            className="absolute inset-x-0 top-0 bg-black"
+            className="absolute inset-x-0 top-0 border-b-2 border-accent/70 bg-black"
             style={{ height: barTop }}
           />
           <div
-            className="absolute inset-x-0 bottom-0 bg-black"
+            className="absolute inset-x-0 bottom-0 border-t-2 border-accent/70 bg-black"
             style={{ height: barTop }}
           />
         </>
@@ -60,14 +60,19 @@ export function AspectRatioMask({
       {barSide > 0 && (
         <>
           <div
-            className="absolute inset-y-0 left-0 bg-black"
+            className="absolute inset-y-0 left-0 border-r-2 border-accent/70 bg-black"
             style={{ width: barSide }}
           />
           <div
-            className="absolute inset-y-0 right-0 bg-black"
+            className="absolute inset-y-0 right-0 border-l-2 border-accent/70 bg-black"
             style={{ width: barSide }}
           />
         </>
+      )}
+      {(barTop > 0 || barSide > 0) && (
+        <div className="absolute bottom-3 right-3 rounded bg-accent/90 px-2 py-0.5 text-[11px] font-medium text-black">
+          {aspectRatio} 크롭 적용됨
+        </div>
       )}
     </div>
   );

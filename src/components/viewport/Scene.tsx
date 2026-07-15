@@ -8,9 +8,12 @@ import { Mannequin } from "./Mannequin";
 import { CameraRig } from "./CameraRig";
 import { FrameCapture } from "./FrameCapture";
 import { useShotStore } from "@/store/useShotStore";
+import { SECOND_SUBJECT_OFFSET } from "@/lib/shotPresets";
 
 function computeOffset(leftRight: number, depth: number): [number, number, number] {
-  return [leftRight * 1.4, 0, depth * 1.4];
+  // 깊이(Z축)는 카메라 시선 방향과 같은 축이라 좌우 이동보다 변화가 덜 두드러진다.
+  // 슬라이더를 움직였을 때 크기 변화가 뚜렷하게 느껴지도록 좌우(1.4)보다 넓은 범위(2.4)를 쓴다.
+  return [leftRight * 1.4, 0, depth * 2.4];
 }
 
 export function Scene() {
@@ -18,6 +21,11 @@ export function Scene() {
   const showGrid = useShotStore((s) => s.showGrid);
   const [x, , z] = computeOffset(subject.leftRight, subject.depth);
   const rotationY = (subject.rotate * Math.PI) / 180;
+
+  const secondX = x + SECOND_SUBJECT_OFFSET.x;
+  const secondZ = z + SECOND_SUBJECT_OFFSET.z;
+  // 두 번째 피사체는 첫 번째 피사체 쪽을 바라보도록 회전 (서로 마주보는 자연스러운 구도)
+  const secondRotationY = Math.atan2(x - secondX, z - secondZ);
 
   return (
     <Canvas
@@ -34,7 +42,7 @@ export function Scene() {
       <Room />
       <Mannequin position={[x, 0, z]} rotationY={rotationY} />
       {subject.showSecondSubject && (
-        <Mannequin position={[x + 0.9, 0, z + 0.3]} rotationY={rotationY} />
+        <Mannequin position={[secondX, 0, secondZ]} rotationY={secondRotationY} />
       )}
 
       {showGrid && (

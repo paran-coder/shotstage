@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useShotStore } from "@/store/useShotStore";
-import { SUBJECT_EYE_HEIGHT } from "@/lib/shotPresets";
+import { SUBJECT_EYE_HEIGHT, SECOND_SUBJECT_OFFSET, SHOT_PRESETS } from "@/lib/shotPresets";
 
 const MOVE_SPEED = 2.4; // m/s
 const VERTICAL_SPEED = 1.6; // m/s
@@ -14,8 +14,19 @@ const LOOK_SENSITIVITY = 0.0025;
 const PITCH_LIMIT = Math.PI * 0.48;
 
 function computeSubjectWorldPosition(leftRight: number, depth: number) {
-  // 슬라이더 -1~1 범위를 실제 미터 오프셋으로 환산
-  return new THREE.Vector3(leftRight * 1.4, 0, depth * 1.4);
+  // 슬라이더 -1~1 범위를 실제 미터 오프셋으로 환산.
+  // Scene.tsx의 computeOffset과 반드시 동일한 배율을 유지해야 카메라 스냅 위치와
+  // 실제 렌더링된 피사체 위치가 어긋나지 않는다.
+  return new THREE.Vector3(leftRight * 1.4, 0, depth * 2.4);
+}
+
+function computeSecondSubjectWorldPosition(leftRight: number, depth: number) {
+  const primary = computeSubjectWorldPosition(leftRight, depth);
+  return new THREE.Vector3(
+    primary.x + SECOND_SUBJECT_OFFSET.x,
+    0,
+    primary.z + SECOND_SUBJECT_OFFSET.z,
+  );
 }
 
 export function CameraRig() {
@@ -30,6 +41,7 @@ export function CameraRig() {
 
   const fov = useShotStore((s) => s.fov);
   const viewMode = useShotStore((s) => s.viewMode);
+  const shotType = useShotStore((s) => s.shotType);
   const subject = useShotStore((s) => s.subject);
   const pendingSnap = useShotStore((s) => s.pendingSnap);
   const clearPendingSnap = useShotStore((s) => s.clearPendingSnap);
@@ -96,13 +108,30 @@ export function CameraRig() {
   useEffect(() => {
     if (!pendingSnap) return;
     const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
-    const newPos = new THREE.Vector3(
-      subjectPos.x,
-      SUBJECT_EYE_HEIGHT + pendingSnap.heightOffset,
-      subjectPos.z + pendingSnap.distance,
-    );
+
+    let newPos: THREE.Vector3;
+    let focal: THREE.Vector3;
+
+    if (pendingSnap.shotType === "overShoulder") {
+      // 오버숄더: 두 번째 피사체의 어깨 너머에서, 첫 번째 피사체의 얼굴을 바라본다.
+      const secondPos = computeSecondSubjectWorldPosition(subject.leftRight, subject.depth);
+      const dir = new THREE.Vector3().subVectors(secondPos, subjectPos).setY(0).normalize();
+      newPos = new THREE.Vector3(
+        secondPos.x + dir.x * pendingSnap.distance,
+        SUBJECT_EYE_HEIGHT + pendingSnap.heightOffset,
+        secondPos.z + dir.z * pendingSnap.distance,
+      );
+      focal = new THREE.Vector3(subjectPos.x, pendingSnap.focalHeight, subjectPos.z);
+    } else {
+      newPos = new THREE.Vector3(
+        subjectPos.x,
+        SUBJECT_EYE_HEIGHT + pendingSnap.heightOffset,
+        subjectPos.z + pendingSnap.distance,
+      );
+      focal = new THREE.Vector3(subjectPos.x, pendingSnap.focalHeight, subjectPos.z);
+    }
+
     posRef.current.copy(newPos);
-    const focal = new THREE.Vector3(subjectPos.x, 1.2, subjectPos.z);
     // 일반 Object3D.lookAt()은 Camera.lookAt()과 방향 계산이 반대라, 카메라 계열
     // 더미 오브젝트를 써야 실제 카메라와 동일한 방향으로 바라보게 된다.
     const dummy = new THREE.PerspectiveCamera();
@@ -119,7 +148,8 @@ export function CameraRig() {
   useEffect(() => {
     if (recenterRequestId === 0) return;
     const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
-    const focal = new THREE.Vector3(subjectPos.x, 1.2, subjectPos.z);
+    const focalHeight = SHOT_PRESETS[shotType].focalHeight;
+    const focal = new THREE.Vector3(subjectPos.x, focalHeight, subjectPos.z);
     const dummy = new THREE.PerspectiveCamera();
     dummy.position.copy(posRef.current);
     dummy.lookAt(focal);
