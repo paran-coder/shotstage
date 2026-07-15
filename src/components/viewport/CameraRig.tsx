@@ -21,7 +21,7 @@ function computeSubjectWorldPosition(leftRight: number, depth: number) {
 export function CameraRig() {
   const { camera, gl } = useThree();
   const posRef = useRef(new THREE.Vector3(0, SUBJECT_EYE_HEIGHT, 2.8));
-  const yawRef = useRef(Math.PI); // 초기: 피사체(+Z쪽 얼굴)를 바라보도록 -Z 방향에서 시작
+  const yawRef = useRef(0); // 초기: 카메라가 -Z(피사체 쪽)를 바라보도록 시작
   const pitchRef = useRef(0);
   const keysRef = useRef<Set<string>>(new Set());
   const isDraggingRef = useRef(false);
@@ -103,7 +103,9 @@ export function CameraRig() {
     );
     posRef.current.copy(newPos);
     const focal = new THREE.Vector3(subjectPos.x, 1.2, subjectPos.z);
-    const dummy = new THREE.Object3D();
+    // 일반 Object3D.lookAt()은 Camera.lookAt()과 방향 계산이 반대라, 카메라 계열
+    // 더미 오브젝트를 써야 실제 카메라와 동일한 방향으로 바라보게 된다.
+    const dummy = new THREE.PerspectiveCamera();
     dummy.position.copy(newPos);
     dummy.lookAt(focal);
     const euler = new THREE.Euler().setFromQuaternion(dummy.quaternion, "YXZ");
@@ -118,7 +120,7 @@ export function CameraRig() {
     if (recenterRequestId === 0) return;
     const subjectPos = computeSubjectWorldPosition(subject.leftRight, subject.depth);
     const focal = new THREE.Vector3(subjectPos.x, 1.2, subjectPos.z);
-    const dummy = new THREE.Object3D();
+    const dummy = new THREE.PerspectiveCamera();
     dummy.position.copy(posRef.current);
     dummy.lookAt(focal);
     const euler = new THREE.Euler().setFromQuaternion(dummy.quaternion, "YXZ");
