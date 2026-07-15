@@ -78,13 +78,17 @@ export function CameraRig() {
     );
   }
 
-  // 키보드 입력 (스페이스바 = 핸드 툴 활성화)
+  // 키보드 입력 (스페이스바 = 핸드 툴 활성화, 커서도 손 모양으로 바꿔 구분되게 함)
   useEffect(() => {
+    const el = gl.domElement;
+
     function isTypingTarget(target: EventTarget | null) {
-      const el = target as HTMLElement | null;
-      if (!el) return false;
-      const tag = el.tagName;
-      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+      const targetEl = target as HTMLElement | null;
+      if (!targetEl) return false;
+      const tag = targetEl.tagName;
+      return (
+        tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || targetEl.isContentEditable
+      );
     }
 
     const down = (e: KeyboardEvent) => {
@@ -92,6 +96,7 @@ export function CameraRig() {
       if (e.code === "Space") {
         e.preventDefault();
         isSpacePanningRef.current = true;
+        el.style.cursor = isDraggingRef.current ? "grabbing" : "grab";
         return;
       }
       keysRef.current.add(e.key.toLowerCase());
@@ -100,6 +105,7 @@ export function CameraRig() {
       if (isTypingTarget(e.target)) return;
       if (e.code === "Space") {
         isSpacePanningRef.current = false;
+        el.style.cursor = "auto";
         return;
       }
       keysRef.current.delete(e.key.toLowerCase());
@@ -110,7 +116,7 @@ export function CameraRig() {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, []);
+  }, [gl]);
 
   // 드래그로 궤도 회전(Shot view) 또는 화면 이동(Bird's-eye), 스크롤로 반지름/고도 조절
   useEffect(() => {
@@ -119,6 +125,7 @@ export function CameraRig() {
     const onPointerDown = (e: PointerEvent) => {
       isDraggingRef.current = true;
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
+      if (isSpacePanningRef.current) el.style.cursor = "grabbing";
     };
     const onPointerMove = (e: PointerEvent) => {
       if (!isDraggingRef.current || !lastPointerRef.current) return;
@@ -153,6 +160,7 @@ export function CameraRig() {
     const onPointerUp = () => {
       isDraggingRef.current = false;
       lastPointerRef.current = null;
+      if (isSpacePanningRef.current) el.style.cursor = "grab";
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
