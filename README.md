@@ -10,28 +10,6 @@ AI 영상/이미지 제작을 위한 3D 카메라 블로킹 도구입니다. 3D 
 
 자세한 배경과 설계 결정은 `PRD.md`, `checklist.md`, `context-notes.md`를 참고하세요.
 
-## 로컬 실행
-
-```bash
-npm install
-npm run dev
-```
-
-브라우저에서 http://localhost:3000 접속.
-
-## 빌드 확인
-
-```bash
-npm run build
-npm run lint
-```
-
-## Vercel 배포
-
-1. 이 저장소를 GitHub에 push
-2. https://vercel.com 에서 "New Project" → 이 저장소 선택 → 별도 설정 없이 Deploy
-   (Next.js 프로젝트는 Vercel이 자동으로 빌드 설정을 인식합니다)
-
 ## 조작법
 
 - `WASD`: 카메라 이동
