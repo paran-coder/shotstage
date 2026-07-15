@@ -8,6 +8,7 @@ import { Mannequin } from "./Mannequin";
 import { CameraRig } from "./CameraRig";
 import { FrameCapture } from "./FrameCapture";
 import { useShotStore } from "@/store/useShotStore";
+import { SUBJECT_COLORS } from "@/lib/subjectColors";
 
 function computeOffset(leftRight: number, depth: number): [number, number, number] {
   // 깊이(Z축)는 카메라 시선 방향과 같은 축이라 좌우 이동보다 변화가 덜 두드러진다.
@@ -39,9 +40,19 @@ export function Scene() {
       <hemisphereLight args={["#8fa8c9", "#0a0d13", 0.4]} />
 
       <Room />
-      <Mannequin position={[x, 0, z]} rotationY={rotationY} />
+      <Mannequin
+        position={[x, 0, z]}
+        rotationY={rotationY}
+        bodyColor={SUBJECT_COLORS.primary.body}
+        jointColor={SUBJECT_COLORS.primary.joint}
+      />
       {subject.showSecondSubject && (
-        <Mannequin position={[secondX, 0, secondZ]} rotationY={secondRotationY} />
+        <Mannequin
+          position={[secondX, 0, secondZ]}
+          rotationY={secondRotationY}
+          bodyColor={SUBJECT_COLORS.secondary.body}
+          jointColor={SUBJECT_COLORS.secondary.joint}
+        />
       )}
 
       {showGrid && (

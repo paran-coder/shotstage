@@ -4,25 +4,30 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
+import { SUBJECT_COLORS } from "@/lib/subjectColors";
 
-const BODY_COLOR = "#cbb28f"; // 목재 아트 마네킹을 연상시키는 따뜻한 우드톤
-const JOINT_COLOR = "#a88f6c"; // 관절 구슬은 살짝 더 어둡게 강조
 const EYE_COLOR = "#3a3226";
 
 export function Mannequin({
   position = [0, 0, 0],
   rotationY = 0,
+  bodyColor = SUBJECT_COLORS.primary.body,
+  jointColor = SUBJECT_COLORS.primary.joint,
 }: {
   position?: [number, number, number];
   rotationY?: number;
+  /** 인물 1/2를 구분하기 위한 몸통 색. lib/subjectColors.ts의 값을 그대로 넘기면
+   *  SUBJECT 패널의 슬라이더 색과 정확히 일치한다. */
+  bodyColor?: string;
+  jointColor?: string;
 }) {
   const bodyMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: BODY_COLOR, roughness: 0.75 }),
-    [],
+    () => new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.75 }),
+    [bodyColor],
   );
   const jointMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: JOINT_COLOR, roughness: 0.7 }),
-    [],
+    () => new THREE.MeshStandardMaterial({ color: jointColor, roughness: 0.7 }),
+    [jointColor],
   );
 
   return (

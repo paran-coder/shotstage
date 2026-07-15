@@ -47,26 +47,14 @@ export function AspectRatioMask({
     <div className="pointer-events-none absolute inset-0">
       {barTop > 0 && (
         <>
-          <div
-            className="absolute inset-x-0 top-0 border-b-2 border-accent/70 bg-black"
-            style={{ height: barTop }}
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 border-t-2 border-accent/70 bg-black"
-            style={{ height: barTop }}
-          />
+          <div className="absolute inset-x-0 top-0 bg-black" style={{ height: barTop }} />
+          <div className="absolute inset-x-0 bottom-0 bg-black" style={{ height: barTop }} />
         </>
       )}
       {barSide > 0 && (
         <>
-          <div
-            className="absolute inset-y-0 left-0 border-r-2 border-accent/70 bg-black"
-            style={{ width: barSide }}
-          />
-          <div
-            className="absolute inset-y-0 right-0 border-l-2 border-accent/70 bg-black"
-            style={{ width: barSide }}
-          />
+          <div className="absolute inset-y-0 left-0 bg-black" style={{ width: barSide }} />
+          <div className="absolute inset-y-0 right-0 bg-black" style={{ width: barSide }} />
         </>
       )}
       {(barTop > 0 || barSide > 0) && (

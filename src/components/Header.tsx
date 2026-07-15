@@ -16,14 +16,13 @@ export function Header() {
           원하는 샷을 정확하게, AI 영상 제작을 위한 카메라 블로킹 도구
         </span>
       </div>
-      <div className="hidden items-center gap-3 text-[11px] text-neutral-500 md:flex">
+      <div className="hidden items-center gap-2.5 text-[11px] text-neutral-500 lg:flex">
         <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">drag</kbd> 궤도 회전
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">drag</kbd> 회전
         </span>
         <span>·</span>
         <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">space</kbd>+
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">drag</kbd> 화면 이동
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">space</kbd> 이동
         </span>
         <span>·</span>
         <span>
@@ -31,8 +30,7 @@ export function Header() {
         </span>
         <span>·</span>
         <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">WASD</kbd>/
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">Q/E</kbd> 중심점 이동
+          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">WASD</kbd> 중심점
         </span>
       </div>
     </header>
