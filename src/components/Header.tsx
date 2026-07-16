@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export function Header() {
   return (
-    <header className="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-neutral-800 bg-neutral-950 px-5">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-800 bg-neutral-950 px-5">
       <div className="flex items-center gap-3">
         <span className="rounded bg-accent/20 p-1 text-accent">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -19,25 +19,26 @@ export function Header() {
         </span>
       </div>
 
-      <div className="hidden items-center gap-2.5 whitespace-nowrap text-[11px] text-neutral-500 md:flex">
-        <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">drag</kbd> 회전
-        </span>
-        <span>·</span>
-        <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">space</kbd> 이동
-        </span>
-        <span>·</span>
-        <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">scroll</kbd> 줌
-        </span>
-        <span>·</span>
-        <span>
-          <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">WASD</kbd> 중심점
-        </span>
-      </div>
-
-      <div className="flex justify-end">
+      {/* 단축키 안내는 "이용 방법" 버튼과 한 그룹으로 묶어서 바로 왼쪽에 붙어 있게 한다
+          (가운데로 따로 떨어지지 않도록 justify-between의 오른쪽 칸에 함께 배치) */}
+      <div className="flex items-center gap-4">
+        <div className="hidden items-center gap-2.5 whitespace-nowrap text-[11px] text-neutral-500 md:flex">
+          <span>
+            <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">drag</kbd> 회전
+          </span>
+          <span>·</span>
+          <span>
+            <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">space</kbd> 이동
+          </span>
+          <span>·</span>
+          <span>
+            <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">scroll</kbd> 줌
+          </span>
+          <span>·</span>
+          <span>
+            <kbd className="rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">WASD</kbd> 중심점
+          </span>
+        </div>
         <Link
           href="/guide"
           className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white"

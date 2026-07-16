@@ -16,8 +16,9 @@ export function fovToMm(fovDeg: number): number {
   return Math.round(mm);
 }
 
-export const LENS_MM_PRESETS = [24, 35, 50, 85, 135] as const;
+export const LENS_MM_PRESETS = [12, 15, 21, 24, 35, 50, 85, 135] as const;
 export type LensMmPreset = (typeof LENS_MM_PRESETS)[number];
 
 export const FOV_MIN = 15;
-export const FOV_MAX = 90;
+// 12mm 초광각(약 112°)까지 프리셋으로 다루므로 여유를 두고 상한을 넉넉히 잡는다.
+export const FOV_MAX = 115;
