@@ -97,9 +97,9 @@ export function ViewportOverlay() {
         </div>
       )}
 
-      {/* 모서리 장식 브라켓 */}
-      <CornerBracket className="left-3 top-3" rotation={0} />
+      {/* 모서리 장식 브라켓: 상단은 라벨/버튼이 이미 차지하고 있어 겹치지 않는 하단 양쪽으로 배치 */}
       <CornerBracket className="bottom-3 left-3" rotation={-90} />
+      <CornerBracket className="bottom-3 right-3" rotation={180} />
     </div>
   );
 }
