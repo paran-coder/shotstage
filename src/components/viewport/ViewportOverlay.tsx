@@ -26,21 +26,10 @@ export function ViewportOverlay() {
 
   return (
     <div className="pointer-events-none absolute inset-0">
-      {/* 상단 왼쪽: 현재 샷 요약 라벨 + 조작 힌트 */}
+      {/* 상단 왼쪽: 현재 샷 요약 라벨 (조작 힌트는 헤더 중앙에 있으므로 여기서는 중복 표시하지 않음) */}
       {showLabels && (
-        <div className="pointer-events-auto absolute left-4 top-4 flex items-center gap-2">
-          <div className="rounded-md bg-black/70 px-3 py-1.5 text-xs text-neutral-100">
-            {topLabel}
-          </div>
-          <div className="hidden rounded-md bg-black/50 px-2.5 py-1.5 text-[11px] text-neutral-400 sm:block">
-            <kbd className="rounded bg-neutral-800 px-1 py-0.5 text-neutral-300">drag</kbd> 회전
-            {" · "}
-            <kbd className="rounded bg-neutral-800 px-1 py-0.5 text-neutral-300">space</kbd> 이동
-            {" · "}
-            <kbd className="rounded bg-neutral-800 px-1 py-0.5 text-neutral-300">scroll</kbd> 줌
-            {" · "}
-            <kbd className="rounded bg-neutral-800 px-1 py-0.5 text-neutral-300">WASD</kbd> 중심점
-          </div>
+        <div className="pointer-events-auto absolute left-4 top-4 rounded-md bg-black/70 px-3 py-1.5 text-xs text-neutral-100">
+          {topLabel}
         </div>
       )}
 
