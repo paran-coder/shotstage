@@ -73,6 +73,10 @@ export interface PromptFieldsState {
   subject: string;
   environment: string;
   lookStyle: string;
+  /** 인물 2(두 번째 피사체) 전용 외형 설명 + 캐릭터시트. showSecondSubject가 켜져 있을 때만 사용된다. */
+  subject2: string;
+  hasCharacterSheet2: boolean;
+  characterSheetImage2: string | null; // data URL
 }
 
 export interface CharacterPreset {

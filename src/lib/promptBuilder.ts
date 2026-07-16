@@ -60,6 +60,18 @@ export interface BuildPromptInput {
   aspectRatio: AspectRatioId;
   prompt: PromptFieldsState;
   videoMove: VideoMoveState;
+  /** 두 번째 피사체(인물 2) 표시 여부. 켜져 있으면 인물 2 전용 외형/캐릭터시트 문장이 추가된다. */
+  hasSecondSubject: boolean;
+}
+
+/** 인물 2(두 번째 피사체)의 외형/캐릭터시트 문장. 모든 모델 빌더가 공통으로 사용한다. */
+function secondSubjectSentences(prompt: PromptFieldsState, hasSecondSubject: boolean): string[] {
+  if (!hasSecondSubject) return [];
+  const out: string[] = [];
+  if (prompt.subject2.trim()) out.push(`Second person: ${prompt.subject2.trim()}.`);
+  if (prompt.hasCharacterSheet2)
+    out.push("Use the attached second character sheet to match the second person's appearance exactly.");
+  return out;
 }
 
 function buildVideoMoveSentence(videoMove: VideoMoveState): string | null {
@@ -87,6 +99,7 @@ function buildGenericPrompt(input: BuildPromptInput): string {
   if (prompt.subject.trim()) sentences.push(`Subject: ${prompt.subject.trim()}.`);
   if (prompt.hasCharacterSheet)
     sentences.push("Use the attached character sheet to match the subject's appearance exactly.");
+  sentences.push(...secondSubjectSentences(prompt, input.hasSecondSubject));
   if (prompt.environment.trim()) sentences.push(`Environment: ${prompt.environment.trim()}.`);
   if (prompt.hasEnvironmentSheet)
     sentences.push("Use the attached environment sheet to match the environment exactly.");
@@ -137,6 +150,7 @@ function buildMidjourneyPrompt(input: BuildPromptInput): string {
   sentences.push("The composition matches the attached reference frame exactly, same camera angle and subject scale.");
   if (prompt.hasCharacterSheet)
     sentences.push("The subject's face and outfit match the attached character reference exactly.");
+  sentences.push(...secondSubjectSentences(prompt, input.hasSecondSubject));
   if (prompt.hasEnvironmentSheet)
     sentences.push("The environment matches the attached environment reference exactly.");
 
@@ -160,6 +174,7 @@ function buildGptImagePrompt(input: BuildPromptInput): string {
   if (prompt.subject.trim()) sentences.push(`Subject: ${prompt.subject.trim()}.`);
   if (prompt.hasCharacterSheet)
     sentences.push("Use the attached character sheet to match the subject's appearance exactly.");
+  sentences.push(...secondSubjectSentences(prompt, input.hasSecondSubject));
   if (prompt.environment.trim()) sentences.push(`Background: ${prompt.environment.trim()}.`);
   if (prompt.hasEnvironmentSheet)
     sentences.push("Use the attached environment sheet to match the environment exactly.");
@@ -171,16 +186,17 @@ function buildGptImagePrompt(input: BuildPromptInput): string {
 
 /** 나노바나나 프로 템플릿 반영: Composition/Lighting 구조 + 오버숄더 전용 문구 + Consistency Core */
 function buildNanoBananaPrompt(input: BuildPromptInput): string {
-  const { shotType, angleLabel, fov, viewDirection, aspectRatio, prompt } = input;
+  const { shotType, angleLabel, fov, viewDirection, aspectRatio, prompt, hasSecondSubject } = input;
   const preset = SHOT_PRESETS[shotType];
   const mm = fovToMm(fov);
   const sentences: string[] = [];
   const subjectText = prompt.subject.trim() || "the subject";
+  const secondPersonText = (hasSecondSubject && prompt.subject2.trim()) || "a second person";
 
   if (shotType === "overShoulder" || shotType === "twoShot") {
     const relation = shotType === "overShoulder" ? "framed from the second person's shoulder" : "both people visible in frame";
     sentences.push(
-      `Over-the-shoulder two-shot of ${subjectText} and a second person${prompt.environment.trim() ? ` at ${prompt.environment.trim()}` : ""}, ${relation}. Composition: ${mm}mm lens, eye-line match, rule-of-thirds.`,
+      `Over-the-shoulder two-shot of ${subjectText} and ${secondPersonText}${prompt.environment.trim() ? ` at ${prompt.environment.trim()}` : ""}, ${relation}. Composition: ${mm}mm lens, eye-line match, rule-of-thirds.`,
     );
   } else {
     sentences.push(
@@ -192,10 +208,12 @@ function buildNanoBananaPrompt(input: BuildPromptInput): string {
   sentences.push(`Lighting: ${prompt.lookStyle.trim() || "soft natural light"}.`);
   sentences.push(`Match the exact framing and camera angle of the attached blocking frame, ${aspectRatio}.`);
 
-  if (prompt.hasCharacterSheet || prompt.hasEnvironmentSheet) {
+  if (prompt.hasCharacterSheet || prompt.hasEnvironmentSheet || (hasSecondSubject && prompt.hasCharacterSheet2)) {
     const parts: string[] = [];
     if (prompt.hasCharacterSheet)
       parts.push("force-match the subject's facial bone structure, skin tone, and outfit to the attached character reference sheet");
+    if (hasSecondSubject && prompt.hasCharacterSheet2)
+      parts.push("force-match the second person's facial bone structure, skin tone, and outfit to the attached second character reference sheet");
     if (prompt.hasEnvironmentSheet)
       parts.push("force-match the set design and materials to the attached environment reference sheet");
     sentences.push(`[Consistency Core]: Do not allow identity drift; ${parts.join("; ")}.`);
@@ -234,6 +252,7 @@ function buildSeedancePrompt(input: BuildPromptInput): string {
     sentences.push(
       "Reference the attached environment sheet and keep the set, materials, and lighting consistent throughout the shot.",
     );
+  sentences.push(...secondSubjectSentences(prompt, input.hasSecondSubject));
   if (prompt.lookStyle.trim()) sentences.push(`${prompt.lookStyle.trim()}.`);
 
   sentences.push(`Natural ambient sound matching the scene, ${aspectRatio}.`);
@@ -270,6 +289,7 @@ function buildKlingPrompt(input: BuildPromptInput): string {
     sentences.push("Match the subject's face and outfit to the attached character sheet.");
   if (prompt.hasEnvironmentSheet)
     sentences.push("Match the environment to the attached environment sheet.");
+  sentences.push(...secondSubjectSentences(prompt, input.hasSecondSubject));
 
   // 3) Style — 형용사 나열 대신 조명/분위기를 문장으로
   sentences.push(`Lighting and mood: ${prompt.lookStyle.trim() || "natural light, cinematic tone"}.`);

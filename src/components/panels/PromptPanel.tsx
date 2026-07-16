@@ -1,4 +1,5 @@
 // PROMPT 패널: Image/Video 모드, 모델 선택, 캐릭터·환경 시트, 프리셋 라이브러리, 무빙샷, Generate
+// 인물 2(두 번째 피사체)가 켜져 있으면, 인물 1과 별개로 인물 2 전용 외형/캐릭터시트 입력도 노출된다.
 "use client";
 
 import { useCallback, useState } from "react";
@@ -7,6 +8,7 @@ import { PresetDropdown } from "./PresetDropdown";
 import { useShotStore } from "@/store/useShotStore";
 import { buildFinalPrompt } from "@/lib/promptBuilder";
 import { CAMERA_MOVE_PRESETS, MOVE_INTENSITY_OPTIONS } from "@/lib/cameraMoves";
+import { SUBJECT_COLORS } from "@/lib/subjectColors";
 import type { CharacterPreset, EnvironmentPreset, StylePreset } from "@/types";
 import {
   deleteCharacterPreset,
@@ -35,6 +37,7 @@ function fileToDataUrl(file: File): Promise<string> {
 export function PromptPanel() {
   const prompt = useShotStore((s) => s.prompt);
   const setPrompt = useShotStore((s) => s.setPrompt);
+  const subject = useShotStore((s) => s.subject);
   const videoMove = useShotStore((s) => s.videoMove);
   const setVideoMove = useShotStore((s) => s.setVideoMove);
   const shotType = useShotStore((s) => s.shotType);
@@ -66,6 +69,11 @@ export function PromptPanel() {
     const dataUrl = await fileToDataUrl(file);
     setPrompt({ characterSheetImage: dataUrl });
   }
+  async function handleCharacterSheetUpload2(file: File | null) {
+    if (!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    setPrompt({ characterSheetImage2: dataUrl });
+  }
   async function handleEnvironmentSheetUpload(file: File | null) {
     if (!file) return;
     const dataUrl = await fileToDataUrl(file);
@@ -79,6 +87,15 @@ export function PromptPanel() {
       name,
       subjectText: prompt.subject,
       referenceImage: prompt.characterSheetImage,
+    }).then(refreshCharacters);
+  }
+  function handleSaveCharacter2(name: string) {
+    const existing = characterPresets.find((p) => p.name === name);
+    saveCharacterPreset({
+      id: existing?.id,
+      name,
+      subjectText: prompt.subject2,
+      referenceImage: prompt.characterSheetImage2,
     }).then(refreshCharacters);
   }
   function handleSaveEnvironment(name: string) {
@@ -104,6 +121,7 @@ export function PromptPanel() {
       aspectRatio,
       prompt,
       videoMove,
+      hasSecondSubject: subject.showSecondSubject,
     });
     requestFrameCapture();
     openResultModal(finalPrompt);
@@ -151,9 +169,10 @@ export function PromptPanel() {
             type="checkbox"
             checked={prompt.hasCharacterSheet}
             onChange={(e) => setPrompt({ hasCharacterSheet: e.target.checked })}
-            className="h-3.5 w-3.5 accent-orange-500"
+            className="h-3.5 w-3.5"
+            style={{ accentColor: SUBJECT_COLORS.primary.body }}
           />
-          캐릭터시트가 있어요
+          {subject.showSecondSubject ? "인물 1 캐릭터시트가 있어요" : "캐릭터시트가 있어요"}
           <span
             title="인물의 얼굴·체형·의상을 고정하기 위한 참조 이미지입니다. 업로드하면 생성 시 이 이미지를 기준으로 외형을 동일하게 유지하라는 지시문이 프롬프트에 자동으로 추가됩니다."
             className="flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-neutral-800 text-[10px] text-neutral-400"
@@ -178,6 +197,46 @@ export function PromptPanel() {
               />
             )}
           </div>
+        )}
+
+        {/* 인물 2 전용 캐릭터시트 — 두 번째 피사체 표시를 켰을 때만 노출 */}
+        {subject.showSecondSubject && (
+          <>
+            <label className="flex items-center gap-1.5 text-sm text-neutral-300">
+              <input
+                type="checkbox"
+                checked={prompt.hasCharacterSheet2}
+                onChange={(e) => setPrompt({ hasCharacterSheet2: e.target.checked })}
+                className="h-3.5 w-3.5"
+                style={{ accentColor: SUBJECT_COLORS.secondary.body }}
+              />
+              인물 2 캐릭터시트가 있어요
+              <span
+                title="인물 2의 얼굴·체형·의상을 고정하기 위한 참조 이미지입니다. 인물 1과 별개로 지정합니다."
+                className="flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-neutral-800 text-[10px] text-neutral-400"
+              >
+                ?
+              </span>
+            </label>
+            {prompt.hasCharacterSheet2 && (
+              <div className="ml-5 flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleCharacterSheetUpload2(e.target.files?.[0] ?? null)}
+                  className="text-xs text-neutral-400 file:mr-2 file:rounded file:border-0 file:bg-neutral-800 file:px-2 file:py-1 file:text-xs file:text-neutral-200"
+                />
+                {prompt.characterSheetImage2 && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={prompt.characterSheetImage2}
+                    alt="인물 2 캐릭터시트 미리보기"
+                    className="h-8 w-8 rounded object-cover"
+                  />
+                )}
+              </div>
+            )}
+          </>
         )}
 
         <label className="flex items-center gap-1.5 text-sm text-neutral-300">
@@ -216,7 +275,7 @@ export function PromptPanel() {
       </div>
 
       <FieldWithLibrary
-        label="피사체"
+        label={subject.showSecondSubject ? "인물 1 (피사체)" : "피사체"}
         value={prompt.subject}
         placeholder="a young woman in a tan coat"
         onChange={(v) => setPrompt({ subject: v })}
@@ -231,7 +290,29 @@ export function PromptPanel() {
         }
         onSaveCurrent={handleSaveCharacter}
         onDelete={(id) => deleteCharacterPreset(id).then(refreshCharacters)}
+        dotColor={subject.showSecondSubject ? SUBJECT_COLORS.primary.body : undefined}
       />
+
+      {subject.showSecondSubject && (
+        <FieldWithLibrary
+          label="인물 2 (피사체)"
+          value={prompt.subject2}
+          placeholder="a tall man in a navy suit"
+          onChange={(v) => setPrompt({ subject2: v })}
+          items={characterPresets}
+          onRefresh={refreshCharacters}
+          onSelect={(item) =>
+            setPrompt({
+              subject2: item.subjectText,
+              characterSheetImage2: item.referenceImage,
+              hasCharacterSheet2: Boolean(item.referenceImage),
+            })
+          }
+          onSaveCurrent={handleSaveCharacter2}
+          onDelete={(id) => deleteCharacterPreset(id).then(refreshCharacters)}
+          dotColor={SUBJECT_COLORS.secondary.body}
+        />
+      )}
 
       <FieldWithLibrary
         label="환경"
@@ -338,6 +419,7 @@ function FieldWithLibrary<T extends { id: string; name: string }>({
   onSelect,
   onSaveCurrent,
   onDelete,
+  dotColor,
 }: {
   label: string;
   value: string;
@@ -348,10 +430,17 @@ function FieldWithLibrary<T extends { id: string; name: string }>({
   onSelect: (item: T) => void;
   onSaveCurrent: (name: string) => void;
   onDelete: (id: string) => void;
+  /** 인물 1/2 구분용 색상 점. 지정하지 않으면 표시 안 함 */
+  dotColor?: string;
 }) {
   return (
     <div className="mb-3">
-      <label className="mb-1.5 block text-xs text-neutral-400">{label}</label>
+      <label className="mb-1.5 flex items-center gap-1.5 text-xs text-neutral-400">
+        {dotColor && (
+          <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: dotColor }} />
+        )}
+        {label}
+      </label>
       <div className="flex gap-1.5">
         <input
           value={value}

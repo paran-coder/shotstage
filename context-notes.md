@@ -177,7 +177,16 @@
 - 파일이 아직 없어도(`public/og.png` 미존재) `npm run build`가 에러 없이 정상 통과하는 것을 확인함 — 사용자가 나중에 파일만 넣으면 별도 코드 수정 없이 바로 적용됨.
 - 경로 안내: `public/og.png`.
 
+## v1.15.0 — 인물 2 전용 캐릭터시트/외형 지원 (2026-07-16)
+사용자가 "피사체가 2개면 캐릭터시트도 2개여야 하지 않냐"고 지적. 확인해보니 캐릭터시트뿐 아니라 **인물 2의 외형을 설명하는 텍스트 입력 자체가 아예 없었다** — 3D 위치(좌우/깊이/회전)는 인물 2가 독립적인데, 프롬프트에는 "a second person"이라는 generic 텍스트로만 언급되고 있었음(나노바나나 빌더 한정, 다른 모델은 아예 언급도 없었음).
+- `types/index.ts`의 `PromptFieldsState`에 `subject2`, `hasCharacterSheet2`, `characterSheetImage2` 추가.
+- `PromptPanel.tsx`: `subject.showSecondSubject`가 켜져 있을 때만 "인물 2 캐릭터시트가 있어요" 체크박스+업로드, "인물 2 (피사체)" 텍스트 입력(프리셋 라이브러리 재사용)을 추가로 노출. 인물 1/2 필드 라벨 앞에 `SUBJECT_COLORS`와 동일한 색 점을 붙여서 3D 모델·SUBJECT 패널과 시각적 일관성 유지.
+- `promptBuilder.ts`: `BuildPromptInput`에 `hasSecondSubject` 추가하고, 공용 헬퍼 `secondSubjectSentences()`를 만들어 모든 모델 빌더(Generic/Midjourney/GPT Image 2/Seedance/Kling)에 동일하게 삽입. 나노바나나 빌더는 기존 "a second person" 하드코딩을 `prompt.subject2`가 있으면 그 텍스트로 대체하고, `[Consistency Core]` 블록에도 인물 2 캐릭터시트 매칭 조건을 추가.
+- `PromptPanel.tsx`의 `handleGenerate()`가 `hasSecondSubject: subject.showSecondSubject`를 `buildFinalPrompt`에 전달하도록 수정 (이게 누락되어 있어서 `npm run build`의 TypeScript 타입 체크에서 바로 잡혔음 — 타입 안전성 덕분에 배포 후가 아니라 빌드 단계에서 발견).
+
 ## 확인되지 않은 가정 (오픈 이슈, PRD 9절과 동일)
+
+
 
 
 
