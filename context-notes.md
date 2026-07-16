@@ -212,7 +212,18 @@
 - `LENS_MM_PRESETS`에 12mm/15mm/21mm 초광각 추가. mmToFov로 계산해보니 12mm=112.6°, 15mm=100.4°로 기존 FOV 슬라이더 상한(90°)을 넘어서, `FOV_MAX`를 90→115로 확장(12mm 화각에 여유를 두고). 8개 프리셋 전체(12~135mm)의 화각을 Node로 재계산해 15~115° 범위 안에 들어오는지 확인.
 - **og.png 재확인**: 사용자가 "1200×630으로 다시 줄게"라고 했던 파일을 실제로는 아직 안 보냈다는 걸 확인해서 정직하게 알렸고, 이후 실제로 1200×630 파일을 받아 `public/og.png`로 교체함. 프로덕션 서버를 다시 띄워 `/og.png` 200 응답과 실제 파일 크기 일치를 재확인.
 
+## v1.19.1 — OG 이미지 진짜 원인 발견: 비공개 프리뷰 URL (2026-07-16)
+사용자가 실제 배포 URL(`https://shotstage-one.vercel.app/`)을 줘서 처음으로 라이브 사이트를 직접 fetch해서 확인함.
+- 실제 페이지의 `og:image` 태그를 확인해보니 `https://shotstage-a4kqi1uxl-parans-projects-83f2c166.vercel.app/opengraph-image?...`를 가리키고 있었다 — 사용자의 공개 alias(`shotstage-one.vercel.app`)가 아니라 **배포마다 바뀌는 고유 프리뷰 URL**이었다.
+- 이 URL로 직접 fetch해보니 **Vercel 로그인 페이지로 리다이렉트**됨 — 즉 이 배포가 비공개(Deployment Protection)로 막혀 있어서, 카카오톡/디스코드 같은 외부 크롤러가 이미지를 가져오려 해도 로그인 벽에 막혀 실패하는 것. 이게 "OG 이미지가 안 보인다"는 문제의 진짜 원인이었다.
+- (참고로 og:image 경로 자체가 `/opengraph-image`로 나온 것도 한 번 더 확인이 필요한 부분이지만, 핵심 원인은 URL의 접근 가능 여부였음 — 이미지 경로가 og.png든 opengraph-image든, 애초에 그 도메인 자체가 크롤러에게 막혀 있으면 무엇을 가리키든 안 보인다.)
+- **수정**: `layout.tsx`의 `metadataBase` 결정 로직에서, 배포마다 바뀌고 종종 비공개인 `VERCEL_URL` 대신 Vercel이 제공하는 **`VERCEL_PROJECT_PRODUCTION_URL`**(항상 안정적인 프로덕션 URL)을 우선 사용하도록 수정. `NEXT_PUBLIC_SITE_URL` > `VERCEL_PROJECT_PRODUCTION_URL` > `VERCEL_URL` > localhost 순.
+- README에 "OG 이미지가 안 보이면 og:image가 가리키는 실제 주소를 확인하고, 그 주소가 로그인을 요구하면 Deployment Protection 문제이니 NEXT_PUBLIC_SITE_URL을 명시적으로 설정하라"는 구체적인 트러블슈팅 가이드 추가.
+- **교훈**: 로컬(`npm run build` + `next start`)에서는 이 문제를 절대 재현할 수 없었다 — `VERCEL_URL`이나 Deployment Protection은 Vercel 플랫폼에서만 발생하는 배포 환경 특유의 문제였기 때문. 여러 번 "로컬에서는 정상"이라고 확인했던 게 실제로는 문제의 핵심(배포 URL 자체의 접근성)을 놓치고 있었던 것 — 배포 관련 이슈는 로컬 재현이 아니라 실제 배포 URL을 직접 확인하는 것이 훨씬 빠르고 정확했다.
+
 ## 확인되지 않은 가정 (오픈 이슈, PRD 9절과 동일)
+
+
 
 
 

@@ -36,9 +36,12 @@ npm run lint
 
 `public/og.png` 경로에 1200×630 크기의 PNG 파일을 넣으면 자동으로 공유 미리보기 이미지로 사용됩니다 (파일이 없어도 빌드는 정상적으로 됩니다. 다만 공유 시 이미지가 안 뜰 뿐입니다).
 
-커스텀 도메인을 연결한다면, OG 이미지 경로가 정확한 도메인을
-가리키도록 Vercel 프로젝트 환경변수에 `NEXT_PUBLIC_SITE_URL=https://내도메인` 을 추가하세요.
-설정하지 않으면 Vercel이 자동으로 부여하는 배포 URL을 사용합니다.
+**공유 시 이미지가 안 보인다면**: `og:image` 태그가 실제로 어떤 주소를 가리키는지 먼저 확인하세요 (배포된 페이지에서 우클릭 → 페이지 소스 보기 → `og:image` 검색). 이 주소가 `vercel.app`으로 끝나는 배포별 고유 URL(예: `프로젝트명-해시-팀명.vercel.app`)이고, 그 주소로 직접 접속했을 때 Vercel 로그인 화면이 뜬다면 — 그 배포가 비공개(Deployment Protection)로 막혀 있어서 카카오톡/디스코드 같은 외부 크롤러가 이미지를 못 가져오는 것입니다. 이 경우:
+
+1. Vercel 프로젝트 → Settings → Environment Variables에 `NEXT_PUBLIC_SITE_URL=https://실제-공개-도메인` 을 추가하고 재배포하세요 (가장 확실한 해결책).
+2. 또는 Vercel 프로젝트 → Settings → Deployment Protection에서 프로덕션 배포는 보호가 걸려있지 않은지 확인하세요.
+
+커스텀 도메인을 연결한 경우에도 위와 동일하게 `NEXT_PUBLIC_SITE_URL`을 설정해두면 안전합니다.
 
 ## 이용 방법 페이지
 

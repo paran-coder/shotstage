@@ -2,10 +2,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-// Vercel 배포 시 자동으로 제공되는 VERCEL_URL을 활용해 OG 이미지 절대 경로를 올바르게 해석한다.
-// 커스텀 도메인을 쓰는 경우 NEXT_PUBLIC_SITE_URL 환경변수를 설정하면 그 값을 우선 사용한다.
+// Vercel의 VERCEL_URL은 배포할 때마다 바뀌는 고유 프리뷰 주소라, 팀/프로젝트 설정에 따라
+// 외부(카카오톡·디스코드 등 링크 미리보기 크롤러)에서 접근이 막혀 있는 경우가 있다.
+// 항상 공개인 "프로덕션 URL"을 우선 쓰고, 커스텀 도메인이 있으면 NEXT_PUBLIC_SITE_URL이 최우선이다.
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : undefined) ??
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
 export const metadata: Metadata = {
