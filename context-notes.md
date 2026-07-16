@@ -170,7 +170,16 @@
 - `buildKlingPrompt()` 추가: 주체+맥락 문장 → "Camera: {무브}, {강도}, then holds a steady frame for the last moment." 식으로 항상 카메라를 명시하고 끝맺음을 붙임(무브가 static이어도 "정지 프레임을 계속 유지한다"고 명시) → 캐릭터/환경시트 있으면 매칭 문구 → 조명/분위기 문장 → 마지막에 지속시간·화각비.
 - `VIDEO_MODELS`에서 "Kling"을 `buildFinalPrompt`의 비디오 분기 switch에 연결. Higgsfield/Runway는 계속 범용 템플릿 사용.
 
+## v1.14.0 — OG 이미지를 정적 파일 참조 방식으로 전환 (2026-07-16)
+사용자가 og.png를 직접 첨부하겠다며 경로만 만들어달라고 요청.
+- `src/app/opengraph-image.tsx`(next/og 동적 생성 파일) 삭제. 정적 파일과 동적 생성 파일을 같이 두면 Next.js 파일 컨벤션이 우선시되어 충돌/중복 태그가 날 수 있어 하나만 남김.
+- `layout.tsx`의 `openGraph.images`/`twitter.images`에 `/og.png`(1200×630)를 명시적으로 참조하도록 추가.
+- 파일이 아직 없어도(`public/og.png` 미존재) `npm run build`가 에러 없이 정상 통과하는 것을 확인함 — 사용자가 나중에 파일만 넣으면 별도 코드 수정 없이 바로 적용됨.
+- 경로 안내: `public/og.png`.
+
 ## 확인되지 않은 가정 (오픈 이슈, PRD 9절과 동일)
+
+
 
 
 

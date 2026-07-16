@@ -16,11 +16,15 @@ export const metadata: Metadata = {
     title: "ShotStage — 원하는 샷을 정확하게",
     description: "AI 영상/이미지 제작을 위한 3D 카메라 블로킹 도구",
     type: "website",
+    // public/og.png 파일을 정적으로 참조한다 (파일이 없으면 공유 미리보기에 이미지가 안 뜰 뿐,
+    // 빌드 에러는 나지 않는다). 1200x630 권장.
+    images: [{ url: "/og.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "ShotStage — 원하는 샷을 정확하게",
     description: "AI 영상/이미지 제작을 위한 3D 카메라 블로킹 도구",
+    images: ["/og.png"],
   },
 };
 
