@@ -1,5 +1,6 @@
 // 앱 전체를 감싸는 루트 레이아웃, 전역 폰트와 메타데이터를 정의
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 // Vercel의 VERCEL_URL은 배포할 때마다 바뀌는 고유 프리뷰 주소라, 팀/프로젝트 설정에 따라
@@ -41,6 +42,7 @@ export default function RootLayout({
     <html lang="ko" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-neutral-950 text-neutral-100 font-sans">
         {children}
+        <Analytics />
       </body>
     </html>
   );
