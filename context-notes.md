@@ -184,7 +184,19 @@
 - `promptBuilder.ts`: `BuildPromptInput`에 `hasSecondSubject` 추가하고, 공용 헬퍼 `secondSubjectSentences()`를 만들어 모든 모델 빌더(Generic/Midjourney/GPT Image 2/Seedance/Kling)에 동일하게 삽입. 나노바나나 빌더는 기존 "a second person" 하드코딩을 `prompt.subject2`가 있으면 그 텍스트로 대체하고, `[Consistency Core]` 블록에도 인물 2 캐릭터시트 매칭 조건을 추가.
 - `PromptPanel.tsx`의 `handleGenerate()`가 `hasSecondSubject: subject.showSecondSubject`를 `buildFinalPrompt`에 전달하도록 수정 (이게 누락되어 있어서 `npm run build`의 TypeScript 타입 체크에서 바로 잡혔음 — 타입 안전성 덕분에 배포 후가 아니라 빌드 단계에서 발견).
 
+## v1.16.0 — 사용자 제공 og.png 반영 (2026-07-16)
+사용자가 직접 만든 og.png(1731×909, "SHOTSTAGE 고도화 버전 작업 기록" 디자인)를 첨부하며 이후 버전부터 포함해달라고 요청.
+- `public/og.png`로 저장. 프로덕션 서버(`next start`)를 띄워 실제로 `/og.png`가 200으로 서빙되고 `<meta property="og:image">` 태그가 정확히 참조하는지 curl로 확인.
+- 실제 이미지 크기(1731×909, 약 1.9:1 — OG 권장 비율 1.91:1과 거의 동일)에 맞춰 `og:image:width`/`height` 메타데이터도 1200×630에서 1731×909로 수정.
+
+## v1.16.1 — og:image 크기 원복 (2026-07-16)
+사용자가 뷰포트의 그리드 토글 아이콘(▦)이 뭔지 물어봄 → 그리드 표시 켜기/끄기 버튼이라고 답변. 동시에 og.png를 1200×630으로 다시 만들어 주겠다며 메타데이터도 그 크기로 되돌려달라고 요청. `layout.tsx`의 `og:image:width/height`를 1731×909 → 1200×630으로 원복.
+
 ## 확인되지 않은 가정 (오픈 이슈, PRD 9절과 동일)
+
+
+
+
 
 
 
