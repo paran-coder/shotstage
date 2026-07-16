@@ -21,7 +21,7 @@ import {
 } from "@/lib/db";
 
 const IMAGE_MODELS = ["GPT Image 2", "Nano Banana Pro", "Midjourney", "Flux"];
-const VIDEO_MODELS = ["Higgsfield", "Runway", "Kling"];
+const VIDEO_MODELS = ["Higgsfield", "Seedance 2.0", "Runway", "Kling"];
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

@@ -204,6 +204,82 @@ function buildNanoBananaPrompt(input: BuildPromptInput): string {
   return sentences.join(" ");
 }
 
+/** Seedance 2.0 가이드(soylab.ai/seedance20) 반영:
+ *  1) "누가 어떤 행동을 하는지"를 논리적 기반으로 먼저 명시
+ *  2) 참조 자료는 "어떤 자료의 무엇을 참조하라"는 자연어로 명확히 지정
+ *     (예: "이미지 1의 구도를 사용하라", "비디오 2의 움직임과 일치시켜라")
+ *  3) 오디오·비디오 동시 생성이 특징이라 분위기에 맞는 앰비언트 사운드도 함께 명시 */
+function buildSeedancePrompt(input: BuildPromptInput): string {
+  const { shotType, angleLabel, viewDirection, aspectRatio, prompt, videoMove } = input;
+  const preset = SHOT_PRESETS[shotType];
+  const sentences: string[] = [];
+  const subjectText = prompt.subject.trim() || "The subject";
+
+  sentences.push(
+    `${capitalize(subjectText)} is in ${prompt.environment.trim() || "the scene"}, framed in ${preset.promptName} at ${angleLabel}, seen from the ${viewDirection}.`,
+  );
+
+  const move = CAMERA_MOVE_PRESETS.find((m) => m.id === videoMove.moveType);
+  const intensity = MOVE_INTENSITY_OPTIONS.find((i) => i.id === videoMove.intensity);
+  const moveDesc = move && intensity ? `${move.promptPhrase} ${intensity.promptAdverb}` : "the camera holds a static frame";
+  sentences.push(
+    `Using the attached blocking frame to match the camera angle and framing, ${moveDesc} over ${videoMove.durationSeconds} seconds.`,
+  );
+
+  if (prompt.hasCharacterSheet)
+    sentences.push(
+      "Reference the attached character sheet and keep the subject's face, outfit, and identity consistent throughout the shot.",
+    );
+  if (prompt.hasEnvironmentSheet)
+    sentences.push(
+      "Reference the attached environment sheet and keep the set, materials, and lighting consistent throughout the shot.",
+    );
+  if (prompt.lookStyle.trim()) sentences.push(`${prompt.lookStyle.trim()}.`);
+
+  sentences.push(`Natural ambient sound matching the scene, ${aspectRatio}.`);
+
+  return sentences.join(" ");
+}
+
+/** Kling 가이드 반영: Subject+Action / Camera(명시적 움직임+끝맺음) / Style(조명·분위기) / 기술사양
+ *  4단 구조. 카메라 움직임을 명시하지 않으면 정지 샷이 되고, 움직임에 끝맺음이 없으면
+ *  생성이 자주 멈춘다는 점, 상반된 카메라 지시를 동시에 넣지 않는 점, 키워드 나열 대신
+ *  구체적 문장으로 쓰는 점을 반영했다. */
+function buildKlingPrompt(input: BuildPromptInput): string {
+  const { shotType, angleLabel, viewDirection, aspectRatio, prompt, videoMove } = input;
+  const preset = SHOT_PRESETS[shotType];
+  const sentences: string[] = [];
+  const subjectText = prompt.subject.trim() || "The subject";
+
+  // 1) Subject + Action/Context
+  sentences.push(
+    `${capitalize(subjectText)} in ${prompt.environment.trim() || "the scene"}, framed in ${preset.promptName} at ${angleLabel}, seen from the ${viewDirection}.`,
+  );
+
+  // 2) Camera — 명시적으로 지정하지 않으면 정지 샷이 되므로 항상 문장으로 못박고, 끝맺음을 붙여
+  //    "언제까지, 어떻게 끝나는지"를 명확히 해서 생성이 멈추는 것을 방지한다.
+  const move = CAMERA_MOVE_PRESETS.find((m) => m.id === videoMove.moveType);
+  const intensity = MOVE_INTENSITY_OPTIONS.find((i) => i.id === videoMove.intensity);
+  const cameraSentence =
+    move && intensity
+      ? `Camera: ${move.promptPhrase}, ${intensity.promptAdverb}, then holds a steady frame for the last moment.`
+      : "Camera: static frame, matching the attached blocking frame exactly, holding steady throughout.";
+  sentences.push(cameraSentence);
+
+  if (prompt.hasCharacterSheet)
+    sentences.push("Match the subject's face and outfit to the attached character sheet.");
+  if (prompt.hasEnvironmentSheet)
+    sentences.push("Match the environment to the attached environment sheet.");
+
+  // 3) Style — 형용사 나열 대신 조명/분위기를 문장으로
+  sentences.push(`Lighting and mood: ${prompt.lookStyle.trim() || "natural light, cinematic tone"}.`);
+
+  // 4) 기술 사양은 마지막에만
+  sentences.push(`${videoMove.durationSeconds}s, ${aspectRatio}.`);
+
+  return sentences.join(" ");
+}
+
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
@@ -211,7 +287,16 @@ function capitalize(s: string): string {
 export function buildFinalPrompt(input: BuildPromptInput): string {
   const baseText =
     input.prompt.mode === "video"
-      ? buildGenericPrompt(input) // Higgsfield/Runway/Kling: 참고 문서가 없어 기존 범용 템플릿 사용
+      ? (() => {
+          switch (input.prompt.model) {
+            case "Seedance 2.0":
+              return buildSeedancePrompt(input);
+            case "Kling":
+              return buildKlingPrompt(input);
+            default:
+              return buildGenericPrompt(input); // Higgsfield/Runway: 참고 문서가 없어 기존 범용 템플릿 사용
+          }
+        })()
       : (() => {
           switch (input.prompt.model) {
             case "Midjourney":

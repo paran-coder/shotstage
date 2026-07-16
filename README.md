@@ -32,6 +32,14 @@ npm run lint
 2. https://vercel.com 에서 "New Project" → 이 저장소 선택 → 별도 설정 없이 Deploy
    (Next.js 프로젝트는 Vercel이 자동으로 빌드 설정을 인식합니다)
 
+커스텀 도메인을 연결한다면, OG(카카오톡/트위터 공유 미리보기) 이미지 경로가 정확한 도메인을
+가리키도록 Vercel 프로젝트 환경변수에 `NEXT_PUBLIC_SITE_URL=https://내도메인` 을 추가하세요.
+설정하지 않으면 Vercel이 자동으로 부여하는 배포 URL을 사용합니다.
+
+## 이용 방법 페이지
+
+앱 상단 "이용 방법" 버튼(`/guide`)에서 조작법과 각 패널 설명을 확인할 수 있습니다.
+
 ## 조작법
 
 - `WASD`: 카메라 이동
